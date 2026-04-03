@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Web Tetris 0.3.54</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%2310171a'/><path d='M18 20h28v6H18zM18 30h18v6H18zM18 40h10v6H18z' fill='%236ea8fe'/></svg>" />
+</head>
+<body>
+  <!--
+    화면 비율 고정(PC):
+    - '디자인 기준 크기'를 viewport에 넣고,
+    - 브라우저 크기에 맞춰 통째로 scale 합니다.
+    - 작은 화면에서도 3열 레이아웃이 무너지지 않고 '그대로 축소'됩니다.
+  -->
+  <div id="stage" class="stage">
+    <div id="viewport" class="viewport" data-design-w="1480" data-design-h="920">
+      <main class="app">
+        <section class="panel left">
+          <h1>Web Tetris</h1>
+
+          
+          <div class="card settings-card">
+            <div class="settings-head">
+              <h2>게임 설정</h2>
+              <button id="settingsToggleBtn" class="settings-toggle" type="button" aria-expanded="false">열기</button>
+            </div>
+
+            <label class="mode-label">플레이 모드
+              <select id="modeSelect">
+                <option value="classic">Classic (10x20)</option>
+                <option value="4wide">4Wide</option>
+              </select>
+            </label>
+
+            <label>모드
+              <select id="subModeSelect">
+                <option value="off">프리 모드</option>
+                <option value="fixed">고정 중력</option>
+                <option value="accel">가속 중력</option>
+              </select>
+            </label>
+
+            <div class="gravity-fixed-only">
+              <label>고정 중력 (0.01 ~ 100)
+                <input id="gravityFixedInput" type="number" min="0.01" max="100" step="0.01" value="0.02" />
+              </label>
+            </div>
+
+            <div class="hidden">
+              <select id="playModeSelect">
+                <option value="solo" selected>혼자(연습)</option>
+              </select>
+              <select id="botDiffSelect">
+                <option value="easy" selected>초</option>
+              </select>
+            </div>
+
+<div class="handling">
+              <h2 class="handling-title">HANDLING</h2>
+
+              <div class="handling-row">
+                <div class="handling-left">
+                  <div class="handling-name">ARR</div>
+                  <input id="arrSlider" type="range" min="0" max="10" step="0.1" value="2" />
+                </div>
+                <div class="handling-right">
+                  <div class="handling-meta"><span id="arrMsText">33</span>MS</div>
+                  <div class="handling-meta"><span id="arrFText">2</span>F</div>
+                </div>
+              </div>
+
+              <div class="handling-row">
+                <div class="handling-left">
+                  <div class="handling-name">DAS</div>
+                  <input id="dasSlider" type="range" min="0" max="20" step="0.05" value="7.6" />
+                </div>
+                <div class="handling-right">
+                  <div class="handling-meta"><span id="dasMsText">127</span>MS</div>
+                  <div class="handling-meta"><span id="dasFText">7.6</span>F</div>
+                </div>
+              </div>
+
+              <div class="handling-row">
+                <div class="handling-left">
+                  <div class="handling-name">SDF</div>
+                  <input id="sdfSlider" type="range" min="1" max="41" step="0.5" value="20" />
+                </div>
+                <div class="handling-right">
+                  <div class="handling-meta"><span id="sdfText">20</span><span class="sdfX">x</span></div>
+                </div>
+              </div>
+</div>
+<label>볼륨
+              <input id="volumeInput" type="range" min="0" max="100" value="35" />
+            </label>
+
+            <div class="actions">
+              <button id="startBtn">게임 시작</button>
+              <button id="restartBtn">재시작 (R)</button>
+            </div>
+
+            <p class="muted">
+              Lock Delay, Preview는 기본값으로 고정되어 있습니다.
+            </p>
+          </div>
+
+</section>
+
+        <section class="board-wrap">
+          <canvas id="gameCanvas" width="560" height="840" aria-label="tetris board"></canvas>
+        </section>
+
+        <section class="panel right">
+
+
+          <!-- ✅ 키 설정 카드 (JS가 동적으로 줄을 채움) -->
+          <div class="card keybind-card">
+            <h2 class="keys-title">키 설정(변경 가능)</h2>
+            <p class="muted">“변경” 누르고 키 입력 (ESC: 취소) / 중복 키는 자동 교환</p>
+            <div id="keybindEditor" class="keybind-editor"></div>
+          </div>
+
+          <div class="card vs-only bot-field">
+            <h2>BOT FIELD</h2>
+            <canvas id="botCanvas" width="296" height="460" aria-label="bot board"></canvas>
+          </div>
+
+</section>
+      </main>
+    </div>
+
+    <!-- 키 변경 중 안내 오버레이 -->
+    <div id="overlay" class="overlay hidden"></div>
+  
+    <div id="touchControls" class="touch-controls" aria-label="mobile controls">
+      <div class="touch-group touch-left">
+        <div class="touch-row util-row">
+          <button class="touch-btn util" data-action="restart" data-mode="tap" type="button">
+            <span class="emoji">🔄</span>
+            <span class="label">restart</span>
+          </button>
+          <button class="touch-btn util" data-action="exit" data-mode="tap" type="button">
+            <span class="emoji">⏹️</span>
+            <span class="label">exit</span>
+          </button>
+        </div>
+
+        <div class="touch-row move-row">
+          <button class="touch-btn" data-action="moveLeft" data-mode="hold" type="button">
+            <span class="emoji">⬅️</span>
+            <span class="label">left</span>
+          </button>
+          <button class="touch-btn" data-action="moveRight" data-mode="hold" type="button">
+            <span class="emoji">➡️</span>
+            <span class="label">right</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="touch-group touch-right">
+        <div class="touch-row rotate-row">
+          <button class="touch-btn" data-action="rotateCCW" data-mode="tap" type="button">
+            <span class="emoji">↺</span>
+            <span class="label">ccw</span>
+          </button>
+          <button class="touch-btn" data-action="rotateCW" data-mode="tap" type="button">
+            <span class="emoji">↻</span>
+            <span class="label">cw</span>
+          </button>
+          <button class="touch-btn" data-action="rotate180" data-mode="tap" type="button">
+            <span class="emoji">🔄</span>
+            <span class="label">180</span>
+          </button>
+        </div>
+
+        <div class="touch-row drop-row">
+          <button class="touch-btn soft" data-action="softDrop" data-mode="hold" type="button">
+            <span class="emoji">🔽</span>
+            <span class="label">soft</span>
+          </button>
+          <button class="touch-btn hard" data-action="hardDrop" data-mode="tap" type="button">
+            <span class="emoji">⏬</span>
+            <span class="label">hard</span>
+          </button>
+          <button class="touch-btn hold" data-action="hold" data-mode="tap" type="button">
+            <span class="emoji">🔁</span>
+            <span class="label">hold</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+
+  <script type="module" src="./src/main.js?v=0.3.54"></script>
+</body>
+</html>
