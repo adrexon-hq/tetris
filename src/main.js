@@ -1,11 +1,11 @@
-console.log("WebTetris VERSION 0.3.51");
-import { DEFAULT_SETTINGS } from "./constants.js?v=0.3.51";
-import { InputManager } from "./input.js?v=0.3.51";
-import { TetrisGame } from "./game.js?v=0.3.51";
-import { Renderer } from "./renderer.js?v=0.3.51";
-import { AudioManager } from "./audio.js?v=0.3.51";
+console.log("WebTetris VERSION 0.3.57");
+import { DEFAULT_SETTINGS } from "./constants.js?v=0.3.57";
+import { InputManager } from "./input.js?v=0.3.57";
+import { TetrisGame } from "./game.js?v=0.3.57";
+import { Renderer } from "./renderer.js?v=0.3.57";
+import { AudioManager } from "./audio.js?v=0.3.57";
 
-const STORAGE_KEY = "web_tetris_settings_0.3.54";
+const STORAGE_KEY = "web_tetris_settings_0.3.57";
 const FRAME_MS = 16.666666666666668;
 
 function mergeSettings(raw) {
@@ -265,8 +265,12 @@ function applyViewportScale() {
 
   document.body.classList.toggle("mobile-ui", isMobileUi);
 
-  const designW = isMobileUi ? 430 : Number(viewport.dataset.designW || 1480);
-  const designH = isMobileUi ? 900 : Number(viewport.dataset.designH || 920);
+  const designW = isMobileUi
+    ? (parseFloat(getComputedStyle(viewport).width) || 430)
+    : Number(viewport.dataset.designW || 1480);
+  const designH = isMobileUi
+    ? (parseFloat(getComputedStyle(viewport).height) || 900)
+    : Number(viewport.dataset.designH || 920);
 
   const scale = Math.min(ww / designW, wh / designH);
   const offsetX = Math.max(0, (ww - designW * scale) / 2);
