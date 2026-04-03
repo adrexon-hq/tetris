@@ -5,7 +5,7 @@ import { TetrisGame } from "./game.js?v=0.3.57";
 import { Renderer } from "./renderer.js?v=0.3.57";
 import { AudioManager } from "./audio.js?v=0.3.57";
 
-const STORAGE_KEY = "web_tetris_settings_0.3.57";
+const STORAGE_KEY = "web_tetris_settings_0.3.58";
 const FRAME_MS = 16.666666666666668;
 
 function mergeSettings(raw) {

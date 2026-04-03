@@ -437,17 +437,15 @@ body.mobile-ui .panel.right {
 
 body.mobile-ui .board-wrap {
   position: absolute;
-  left: 0;
-  right: 0;
+  left: 50%;
   top: 50%;
+  width: 336px;
   height: 504px;
   z-index: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  display: block;
   padding: 0;
   pointer-events: none;
-  transform: translateY(-50%);
+  transform: translate(-50%, -50%);
 }
 
 body.mobile-ui .board-wrap > * {
@@ -544,6 +542,9 @@ body.mobile-ui .panel.left input[type="range"] {
   body.mobile-ui .board-wrap {
     width: 312px;
     height: 468px;
+    left: 50%;
+    right: auto;
+    transform: translate(-50%, -50%);
   }
 
   body.mobile-ui #gameCanvas {
