@@ -1,6 +1,6 @@
-import { DEFAULT_SETTINGS, getKickData, getKickData180 } from "./constants.js?v=0.3.71";
-import { Board } from "./board.js?v=0.3.71";
-import { BagRandomizer } from "./randomizer.js?v=0.3.71";
+import { DEFAULT_SETTINGS, getKickData, getKickData180 } from "./constants.js?v=0.3.76";
+import { Board } from "./board.js?v=0.3.76";
+import { BagRandomizer } from "./randomizer.js?v=0.3.76";
 
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
@@ -81,6 +81,11 @@ export class TetrisGame {
     this.bot = null;
 
     this._lastMoveSeenMs = 0;
+
+    this.isMobileUi = false;
+    this.mobileFreeLockDelayMs = 1500;
+    this.mobileFreeLockTimerMs = 0;
+    this.mobileActionThisFrame = false;
 
     this.moveRepeat = {
       active: false,
@@ -191,6 +196,8 @@ export class TetrisGame {
     this.playTimeSec = 0;
     this.attackLast = 0;
     this.attackTotal = 0;
+    this.mobileFreeLockTimerMs = 0;
+    this.mobileActionThisFrame = false;
 
     this.popup = null;
 
@@ -556,18 +563,35 @@ export class TetrisGame {
     if (!this.currentPiece) return;
 
     let rotated = false;
-    if (this.input.consumeJustPressed("rotateCW")) rotated = this.tryRotate(1) || rotated;
-    if (this.input.consumeJustPressed("rotateCCW")) rotated = this.tryRotate(-1) || rotated;
-    if (this.input.consumeJustPressed("rotate180")) rotated = this.tryRotate180() || rotated;
-    if (this.input.consumeJustPressed("hardDrop")) this.hardDrop();
-    if (this.input.consumeJustPressed("hold")) this.hold();
+    if (this.input.consumeJustPressed("rotateCW")) {
+      this.mobileActionThisFrame = true;
+      rotated = this.tryRotate(1) || rotated;
+    }
+    if (this.input.consumeJustPressed("rotateCCW")) {
+      this.mobileActionThisFrame = true;
+      rotated = this.tryRotate(-1) || rotated;
+    }
+    if (this.input.consumeJustPressed("rotate180")) {
+      this.mobileActionThisFrame = true;
+      rotated = this.tryRotate180() || rotated;
+    }
+    if (this.input.consumeJustPressed("hardDrop")) {
+      this.mobileActionThisFrame = true;
+      this.hardDrop();
+    }
+    if (this.input.consumeJustPressed("hold")) {
+      this.mobileActionThisFrame = true;
+      this.hold();
+    }
 
     // DAS immediate step on fresh press
     if (this.input.consumeJustPressed("moveLeft")) {
+      this.mobileActionThisFrame = true;
       this.tryMove(-1, 0, "move");
       this.startMoveRepeat("moveLeft", now);
     }
     if (this.input.consumeJustPressed("moveRight")) {
+      this.mobileActionThisFrame = true;
       this.tryMove(1, 0, "move");
       this.startMoveRepeat("moveRight", now);
     }
@@ -659,6 +683,7 @@ export class TetrisGame {
 
     if (now - this.moveRepeat.lastStepAt >= stepMs) {
       const moved = dir === "moveLeft" ? this.tryMove(-1, 0, "move") : this.tryMove(1, 0, "move");
+      if (moved) this.mobileActionThisFrame = true;
       // blocked -> do nothing
       this.moveRepeat.lastStepAt = now;
     }
@@ -681,6 +706,7 @@ export class TetrisGame {
     // ✅ PLAYING에서만 시간이 흐른다
     this.playTimeSec += dtMs / 1000;
 
+    this.mobileActionThisFrame = false;
     this.handleOneShotInputs(now);
     this.handleDasArr(now);
 
@@ -707,7 +733,10 @@ export class TetrisGame {
         if (soft && sdfIsInf) {
           let movedCount = 0;
           while (this.tryMove(0, 1, "softDrop")) movedCount++;
-          if (movedCount > 0) this.score += movedCount; // soft drop 점수
+          if (movedCount > 0) {
+            this.score += movedCount; // soft drop 점수
+            this.mobileActionThisFrame = true;
+          }
           this.dropAccumulator = 0;
         } else {
           // ✅ 중력 OFF(infinite)라도 소프트드랍은 동작해야 함
@@ -719,6 +748,7 @@ export class TetrisGame {
 
           while (this.dropAccumulator >= 1) {
             const moved = this.tryMove(0, 1, soft ? "softDrop" : "fall");
+            if (moved && soft) this.mobileActionThisFrame = true;
             if (!moved) {
               this.dropAccumulator = 0;
               break;
@@ -730,15 +760,29 @@ export class TetrisGame {
 
 
 
-// ✅ 중력 OFF 모드에서는 자동 락(설치) 금지
-    // - 바닥에 닿아도 lockDelay로 자동 고정하지 않습니다.
-    // - 설치는 hardDrop(스페이스)로만 가능하게 됩니다.
+    const touchingGround = this.board.collides({ ...this.currentPiece, y: this.currentPiece.y + 1 });
+
+    // ✅ 중력 OFF 모드에서는 기본적으로 자동 락(설치) 금지
+    // 단, 모바일에서는 소프트드랍으로 바닥에 붙인 뒤 1.5초 이상 추가 조작이 없으면
+    // 자동으로 설치되게 해서 터치 조작 피로를 줄입니다.
     if (this.settings.subMode === "off") {
+      if (this.isMobileUi && touchingGround) {
+        if (this.mobileActionThisFrame) this.mobileFreeLockTimerMs = 0;
+        else this.mobileFreeLockTimerMs += dtMs;
+
+        if (this.mobileFreeLockTimerMs >= this.mobileFreeLockDelayMs) {
+          this.lockNow(performance.now());
+          this.mobileFreeLockTimerMs = 0;
+        }
+      } else {
+        this.mobileFreeLockTimerMs = 0;
+      }
+
       this.lockTimerMs = 0;
       return;
     }
 
-    const touchingGround = this.board.collides({ ...this.currentPiece, y: this.currentPiece.y + 1 });
+    this.mobileFreeLockTimerMs = 0;
     if (touchingGround) {
       this.lockTimerMs += dtMs;
       if (this.lockTimerMs >= this.settings.lockDelayMs) {

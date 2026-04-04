@@ -1,9 +1,9 @@
-console.log("WebTetris VERSION 0.3.71");
-import { DEFAULT_SETTINGS } from "./constants.js?v=0.3.71";
-import { InputManager } from "./input.js?v=0.3.71";
-import { TetrisGame } from "./game.js?v=0.3.71";
-import { Renderer } from "./renderer.js?v=0.3.71";
-import { AudioManager } from "./audio.js?v=0.3.71";
+console.log("bailis VERSION 0.3.77");
+import { DEFAULT_SETTINGS } from "./constants.js?v=0.3.77";
+import { InputManager } from "./input.js?v=0.3.77";
+import { TetrisGame } from "./game.js?v=0.3.77";
+import { Renderer } from "./renderer.js?v=0.3.77";
+import { AudioManager } from "./audio.js?v=0.3.77";
 
 const STORAGE_KEY = "web_tetris_settings_0.3.60";
 const FRAME_MS = 16.666666666666668;
@@ -97,6 +97,8 @@ const els = {
   mobileModeMenuBtn: document.getElementById("mobileModeMenuBtn"),
   mobileHandlingMenuBtn: document.getElementById("mobileHandlingMenuBtn"),
   mobileStartBtn: document.getElementById("mobileStartBtn"),
+  mobileExitBtn: document.getElementById("mobileExitBtn"),
+  mobileRestartBtn: document.getElementById("mobileRestartBtn"),
   mobileModeSwitch: document.getElementById("mobileModeSwitch"),
   mobileModeClassicBtn: document.getElementById("mobileModeClassicBtn"),
   mobileMode4WideBtn: document.getElementById("mobileMode4WideBtn"),
@@ -118,6 +120,9 @@ const els = {
   botCanvas: document.getElementById("botCanvas"),
 
   keybindEditor: document.getElementById("keybindEditor"),
+  keybindCard: document.querySelector(".keybind-card"),
+  desktopKeybindSheetHost: document.getElementById("desktopKeybindSheetHost"),
+  panelRight: document.querySelector(".panel.right"),
   overlay: document.getElementById("overlay"),
   touchControls: document.getElementById("touchControls"),
   settingsCard: document.querySelector(".settings-card"),
@@ -172,8 +177,31 @@ const mobileControls = {
 let mobileModeSheetOpen = false;
 let mobileHandlingSheetOpen = false;
 
+function relocateKeybindCard() {
+  const card = els.keybindCard;
+  if (!card) return;
+
+  const desktopQuick = document.body.classList.contains("desktop-quick-ui");
+  const sheetHost = els.desktopKeybindSheetHost;
+  const panelRight = els.panelRight;
+  const botField = panelRight?.querySelector(".bot-field") ?? null;
+
+  if (desktopQuick && sheetHost) {
+    if (card.parentElement !== sheetHost) sheetHost.appendChild(card);
+    return;
+  }
+
+  if (panelRight && card.parentElement !== panelRight) {
+    panelRight.insertBefore(card, botField);
+  }
+}
+
 function isMobileUi() {
   return document.body.classList.contains("mobile-ui");
+}
+
+function hasQuickTopbarUi() {
+  return document.body.classList.contains("mobile-ui") || document.body.classList.contains("desktop-quick-ui");
 }
 
 function closeMobileSheets() {
@@ -190,8 +218,8 @@ function getModeLabel(mode) {
 
 function updateMobileModeSwitcher() {
   if (!els.mobileModeSwitch) return;
-  const isMobile = isMobileUi();
-  els.mobileModeSwitch.classList.toggle("is-hidden", !isMobile);
+  const showQuickSwitcher = hasQuickTopbarUi();
+  els.mobileModeSwitch.classList.toggle("is-hidden", !showQuickSwitcher);
 
   const mode = settings.mode || "4wide";
   els.mobileModeClassicBtn?.classList.toggle("is-active", mode === "classic");
@@ -200,18 +228,20 @@ function updateMobileModeSwitcher() {
 
 function updateMobileStartButton() {
   if (!els.mobileStartBtn) return;
-  els.mobileStartBtn.textContent = game?.state === "PLAYING" ? "재시작" : "게임 시작";
+  const icon = game?.state === "PLAYING" ? "↻" : "▶";
+  const label = game?.state === "PLAYING" ? "재시작" : "게임 시작";
+  els.mobileStartBtn.innerHTML = `<span class="icon">${icon}</span><span class="text">${label}</span>`;
 }
 
 function applyMobileSettingsUi() {
-  const isMobile = isMobileUi();
-  if (!isMobile) {
+  const hasQuickUi = hasQuickTopbarUi();
+  if (!hasQuickUi) {
     mobileModeSheetOpen = false;
     mobileHandlingSheetOpen = false;
   }
 
-  document.body.classList.toggle("mobile-mode-sheet-open", isMobile && mobileModeSheetOpen);
-  document.body.classList.toggle("mobile-handling-sheet-open", isMobile && mobileHandlingSheetOpen);
+  document.body.classList.toggle("mobile-mode-sheet-open", hasQuickUi && mobileModeSheetOpen);
+  document.body.classList.toggle("mobile-handling-sheet-open", hasQuickUi && mobileHandlingSheetOpen);
 
   if (els.settingsToggleBtn) {
     els.settingsToggleBtn.hidden = true;
@@ -362,6 +392,8 @@ function applyViewportScale() {
   const isMobileUi = window.matchMedia("(max-width: 1100px), (pointer: coarse)").matches;
 
   document.body.classList.toggle("mobile-ui", isMobileUi);
+  document.body.classList.toggle("desktop-quick-ui", !isMobileUi);
+  relocateKeybindCard();
 
   const designW = isMobileUi
     ? (parseFloat(getComputedStyle(viewport).width) || 430)
@@ -384,6 +416,7 @@ function applyViewportScale() {
 
   // 강제 리플로우(초기 뿌연 렌더링 완화)
   void viewport.offsetHeight;
+  if (game) game.isMobileUi = isMobileUi;
   applyMobileSettingsUi();
   updateMobileModeSwitcher();
 }
@@ -571,7 +604,7 @@ renderKeybindEditor();
 initTouchControls();
 
 function toggleMobileSheet(kind) {
-  if (!isMobileUi()) return;
+  if (!hasQuickTopbarUi()) return;
   if (kind === "mode") {
     mobileModeSheetOpen = !mobileModeSheetOpen;
     if (mobileModeSheetOpen) mobileHandlingSheetOpen = false;
@@ -615,10 +648,10 @@ if (els.mobileMode4WideBtn) {
 }
 
 window.addEventListener("pointerdown", (e) => {
-  if (!isMobileUi()) return;
+  if (!hasQuickTopbarUi()) return;
   const target = e.target;
   if (!(target instanceof Element)) return;
-  if (target.closest(".mobile-sheet") || target.closest(".mobile-topbar") || target.closest(".mobile-mode-switch") || target.closest(".mobile-bottom-start")) return;
+  if (target.closest(".mobile-sheet") || target.closest(".mobile-topbar") || target.closest(".mobile-mode-switch") || target.closest(".mobile-system-row")) return;
   closeMobileSheets();
 });
 
@@ -729,7 +762,49 @@ function startFromControls(source = (isMobileUi() ? "mobile" : "desktop")) {
 }
 
 els.startBtn.addEventListener("click", () => startFromControls("desktop"));
+
 els.mobileStartBtn?.addEventListener("click", () => startFromControls(isMobileUi() ? "mobile" : "desktop"));
+
+els.mobileExitBtn?.addEventListener("click", () => {
+  closeMobileSheets();
+  game.toTitle();
+  updateMobileStartButton();
+});
+
+els.mobileRestartBtn?.addEventListener("click", () => {
+  audio.setVolume01((game.settings.volume ?? 35) / 100);
+  audio.unlock();
+
+  if (game.state === "PLAYING" || game.state === "GAME_OVER") {
+    game.restart();
+  } else {
+    let next = readSettingsFromForm(game.settings, isMobileUi() ? mobileControls : desktopControls);
+    next = enforceFixedSettings(next);
+    saveSettings(next);
+    settings = next;
+
+    applySettingsToForm(next);
+    game.applySettings(next);
+    input.keybind = game.settings.keybind;
+    game.start();
+  }
+  closeMobileSheets();
+  updateMobileStartButton();
+});
+
+canvas?.addEventListener("click", () => {
+  if (isMobileUi()) return;
+  if (game.state !== "TITLE") return;
+  startFromControls("desktop");
+});
+
+window.addEventListener("keydown", (e) => {
+  if (isMobileUi()) return;
+  if (e.code !== "Enter") return;
+  if (rebinding || game.state !== "TITLE") return;
+  e.preventDefault();
+  startFromControls("desktop");
+});
 
 els.restartBtn.addEventListener("click", () => {
   audio.setVolume01((game.settings.volume ?? 35) / 100);

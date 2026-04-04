@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Web Tetris 0.3.71</title>
+  <title>bailis</title>
   <link rel="stylesheet" href="./styles.css" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%2310171a'/><path d='M18 20h28v6H18zM18 30h18v6H18zM18 40h10v6H18z' fill='%236ea8fe'/></svg>" />
 </head>
@@ -90,6 +90,13 @@
             <label>볼륨
               <input id="mobileVolumeInput" type="range" min="0" max="100" value="35" />
             </label>
+
+            <div id="desktopKeybindSheetSection" class="desktop-keybind-sheet-section">
+              <div class="desktop-sheet-divider"></div>
+              <div class="mobile-sheet-title keybind-sheet-title">키 설정</div>
+              <p class="card-guide key-guide desktop-keybind-guide">변경 버튼을 누른 뒤 원하는 키를 입력하세요. ESC는 취소되고, 중복 키는 자동으로 교환됩니다.</p>
+              <div id="desktopKeybindSheetHost"></div>
+            </div>
           </div>
         </div>
 
@@ -183,8 +190,23 @@
 </section>
 
         <section class="board-wrap">
-          <canvas id="gameCanvas" width="560" height="840" aria-label="tetris board"></canvas>
-          <button id="mobileStartBtn" class="mobile-bottom-start" type="button">게임 시작</button>
+          <div class="board-shell">
+            <canvas id="gameCanvas" width="560" height="840" aria-label="tetris board"></canvas>
+          </div>
+          <div class="mobile-system-row" aria-label="모바일 시스템 버튼">
+            <button id="mobileExitBtn" class="mobile-system-btn mobile-system-side" type="button">
+              <span class="icon">⤺</span>
+              <span class="text">EXIT</span>
+            </button>
+            <button id="mobileStartBtn" class="mobile-bottom-start" type="button">
+              <span class="icon">▶</span>
+              <span class="text">게임 시작</span>
+            </button>
+            <button id="mobileRestartBtn" class="mobile-system-btn mobile-system-side" type="button">
+              <span class="icon">↻</span>
+              <span class="text">RESTART</span>
+            </button>
+          </div>
         </section>
 
         <section class="panel right">
@@ -209,57 +231,46 @@
   
     <div id="touchControls" class="touch-controls" aria-label="mobile controls">
       <div class="touch-group touch-left">
-        <div class="touch-row util-row">
-          <button class="touch-btn util" data-action="restart" data-mode="tap" type="button">
-            <span class="emoji">🔄</span>
-            <span class="label">restart</span>
-          </button>
-          <button class="touch-btn util" data-action="exit" data-mode="tap" type="button">
-            <span class="emoji">⏹️</span>
-            <span class="label">exit</span>
-          </button>
-        </div>
-
         <div class="touch-row move-row">
-          <button class="touch-btn" data-action="moveLeft" data-mode="hold" type="button">
-            <span class="emoji">⬅️</span>
-            <span class="label">left</span>
+          <button class="touch-btn move-btn" data-action="moveLeft" data-mode="hold" type="button">
+            <span class="emoji">←</span>
+            <span class="label">LEFT</span>
           </button>
-          <button class="touch-btn" data-action="moveRight" data-mode="hold" type="button">
-            <span class="emoji">➡️</span>
-            <span class="label">right</span>
+          <button class="touch-btn move-btn" data-action="moveRight" data-mode="hold" type="button">
+            <span class="emoji">→</span>
+            <span class="label">RIGHT</span>
           </button>
         </div>
       </div>
 
       <div class="touch-group touch-right">
         <div class="touch-row rotate-row">
-          <button class="touch-btn" data-action="rotateCCW" data-mode="tap" type="button">
-            <span class="emoji">↺</span>
-            <span class="label">ccw</span>
+          <button class="touch-btn rotate-btn" data-action="rotateCCW" data-mode="tap" type="button">
+            <span class="emoji">⟲</span>
+            <span class="label">CCW</span>
           </button>
-          <button class="touch-btn" data-action="rotateCW" data-mode="tap" type="button">
-            <span class="emoji">↻</span>
-            <span class="label">cw</span>
+          <button class="touch-btn rotate-btn" data-action="rotateCW" data-mode="tap" type="button">
+            <span class="emoji">⟳</span>
+            <span class="label">CW</span>
           </button>
-          <button class="touch-btn" data-action="rotate180" data-mode="tap" type="button">
-            <span class="emoji">🔄</span>
-            <span class="label">180</span>
+          <button class="touch-btn rotate-btn spin180" data-action="rotate180" data-mode="tap" type="button">
+            <span class="emoji">180°</span>
+            <span class="label">TURN</span>
           </button>
         </div>
 
         <div class="touch-row drop-row">
           <button class="touch-btn soft" data-action="softDrop" data-mode="hold" type="button">
-            <span class="emoji">🔽</span>
-            <span class="label">soft</span>
+            <span class="emoji">↓</span>
+            <span class="label">SOFT</span>
           </button>
           <button class="touch-btn hard" data-action="hardDrop" data-mode="tap" type="button">
-            <span class="emoji">⏬</span>
-            <span class="label">hard</span>
+            <span class="emoji">⇣</span>
+            <span class="label">HARD</span>
           </button>
           <button class="touch-btn hold" data-action="hold" data-mode="tap" type="button">
-            <span class="emoji">🔁</span>
-            <span class="label">hold</span>
+            <span class="emoji">H</span>
+            <span class="label">HOLD</span>
           </button>
         </div>
       </div>
@@ -275,6 +286,6 @@
         <span class="contact-email">adrexonhq@gmail.com</span>
       </a>
     </div>
-<script type="module" src="./src/main.js?v=0.3.71"></script>
+<script type="module" src="./src/main.js?v=0.3.76"></script>
 </body>
 </html>

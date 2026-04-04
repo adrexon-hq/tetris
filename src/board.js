@@ -1,4 +1,4 @@
-import { PIECE_CELLS } from "./constants.js?v=0.3.71";
+import { PIECE_CELLS } from "./constants.js?v=0.3.76";
 
 export class Board {
   constructor(width, visibleHeight, internalHeight) {
