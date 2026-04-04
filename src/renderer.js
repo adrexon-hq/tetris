@@ -1,4 +1,4 @@
-import { COLORS, PIECE_CELLS } from "./constants.js?v=0.3.58";
+import { COLORS, PIECE_CELLS } from "./constants.js?v=0.3.71";
 
 export class Renderer {
   constructor(canvas) {
@@ -254,11 +254,14 @@ export class Renderer {
     }
 
 // status text inside canvas
-    ctx.fillStyle = "#c9d4f2";
-    ctx.font = "bold 16px Pretendard, sans-serif";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "bottom";
-    ctx.fillText(game.state, boardX + boardPxW / 2, boardY - 8);
+    const hideMobileTitleState = document.body.classList.contains("mobile-ui") && game.state === "TITLE";
+    if (!hideMobileTitleState) {
+      ctx.fillStyle = "#c9d4f2";
+      ctx.font = "bold 16px Pretendard, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+      ctx.fillText(game.state, boardX + boardPxW / 2, boardY - 8);
+    }
 
     if (game.state === "TITLE") {
       this.drawCenterText("게임 시작 버튼을 누르세요", 22);

@@ -152,7 +152,7 @@ export const DEFAULT_SETTINGS = {
     hardDrop: "Space",
     rotateCW: "ArrowUp",
     rotateCCW: "KeyZ",
-    rotate180: "KeyX",
+    rotate180: "KeyA",
     hold: "KeyC",
     exit: "Escape",
     restart: "KeyR"

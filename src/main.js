@@ -1,11 +1,11 @@
-console.log("WebTetris VERSION 0.3.57");
-import { DEFAULT_SETTINGS } from "./constants.js?v=0.3.57";
-import { InputManager } from "./input.js?v=0.3.57";
-import { TetrisGame } from "./game.js?v=0.3.57";
-import { Renderer } from "./renderer.js?v=0.3.57";
-import { AudioManager } from "./audio.js?v=0.3.57";
+console.log("WebTetris VERSION 0.3.71");
+import { DEFAULT_SETTINGS } from "./constants.js?v=0.3.71";
+import { InputManager } from "./input.js?v=0.3.71";
+import { TetrisGame } from "./game.js?v=0.3.71";
+import { Renderer } from "./renderer.js?v=0.3.71";
+import { AudioManager } from "./audio.js?v=0.3.71";
 
-const STORAGE_KEY = "web_tetris_settings_0.3.58";
+const STORAGE_KEY = "web_tetris_settings_0.3.60";
 const FRAME_MS = 16.666666666666668;
 
 function mergeSettings(raw) {
@@ -94,6 +94,27 @@ const els = {
   startBtn: document.getElementById("startBtn"),
   restartBtn: document.getElementById("restartBtn"),
 
+  mobileModeMenuBtn: document.getElementById("mobileModeMenuBtn"),
+  mobileHandlingMenuBtn: document.getElementById("mobileHandlingMenuBtn"),
+  mobileStartBtn: document.getElementById("mobileStartBtn"),
+  mobileModeSwitch: document.getElementById("mobileModeSwitch"),
+  mobileModeClassicBtn: document.getElementById("mobileModeClassicBtn"),
+  mobileMode4WideBtn: document.getElementById("mobileMode4WideBtn"),
+  mobileModeSheet: document.getElementById("mobileModeSheet"),
+  mobileHandlingSheet: document.getElementById("mobileHandlingSheet"),
+  mobileMode: document.getElementById("mobileModeSelect"),
+  mobileSubMode: document.getElementById("mobileSubModeSelect"),
+  mobileGravityFixedInput: document.getElementById("mobileGravityFixedInput"),
+  mobileArrSlider: document.getElementById("mobileArrSlider"),
+  mobileDasSlider: document.getElementById("mobileDasSlider"),
+  mobileSdfSlider: document.getElementById("mobileSdfSlider"),
+  mobileArrMsText: document.getElementById("mobileArrMsText"),
+  mobileArrFText: document.getElementById("mobileArrFText"),
+  mobileDasMsText: document.getElementById("mobileDasMsText"),
+  mobileDasFText: document.getElementById("mobileDasFText"),
+  mobileSdfText: document.getElementById("mobileSdfText"),
+  mobileVolume: document.getElementById("mobileVolumeInput"),
+
   botCanvas: document.getElementById("botCanvas"),
 
   keybindEditor: document.getElementById("keybindEditor"),
@@ -115,17 +136,90 @@ const els = {
   attackTotalText: document.getElementById("attackTotalText"),
 };
 
+const desktopControls = {
+  mode: els.mode,
+  subMode: els.subMode,
+  gravityFixedInput: els.gravityFixedInput,
+  arrSlider: els.arrSlider,
+  dasSlider: els.dasSlider,
+  sdfSlider: els.sdfSlider,
+  arrMsText: els.arrMsText,
+  arrFText: els.arrFText,
+  dasMsText: els.dasMsText,
+  dasFText: els.dasFText,
+  sdfText: els.sdfText,
+  volume: els.volume,
+};
 
-let mobileSettingsCollapsed = true;
+let game = null;
+let renderer = null;
+
+const mobileControls = {
+  mode: els.mobileMode,
+  subMode: els.mobileSubMode,
+  gravityFixedInput: els.mobileGravityFixedInput,
+  arrSlider: els.mobileArrSlider,
+  dasSlider: els.mobileDasSlider,
+  sdfSlider: els.mobileSdfSlider,
+  arrMsText: els.mobileArrMsText,
+  arrFText: els.mobileArrFText,
+  dasMsText: els.mobileDasMsText,
+  dasFText: els.mobileDasFText,
+  sdfText: els.mobileSdfText,
+  volume: els.mobileVolume,
+};
+
+let mobileModeSheetOpen = false;
+let mobileHandlingSheetOpen = false;
+
+function isMobileUi() {
+  return document.body.classList.contains("mobile-ui");
+}
+
+function closeMobileSheets() {
+  mobileModeSheetOpen = false;
+  mobileHandlingSheetOpen = false;
+  applyMobileSettingsUi();
+  updateMobileModeSwitcher();
+}
+
+
+function getModeLabel(mode) {
+  return mode === "classic" ? "Classic" : "4Wide";
+}
+
+function updateMobileModeSwitcher() {
+  if (!els.mobileModeSwitch) return;
+  const isMobile = isMobileUi();
+  els.mobileModeSwitch.classList.toggle("is-hidden", !isMobile);
+
+  const mode = settings.mode || "4wide";
+  els.mobileModeClassicBtn?.classList.toggle("is-active", mode === "classic");
+  els.mobileMode4WideBtn?.classList.toggle("is-active", mode === "4wide");
+}
+
+function updateMobileStartButton() {
+  if (!els.mobileStartBtn) return;
+  els.mobileStartBtn.textContent = game?.state === "PLAYING" ? "재시작" : "게임 시작";
+}
 
 function applyMobileSettingsUi() {
-  const isMobile = document.body.classList.contains("mobile-ui");
-  if (!els.settingsCard || !els.settingsToggleBtn) return;
+  const isMobile = isMobileUi();
+  if (!isMobile) {
+    mobileModeSheetOpen = false;
+    mobileHandlingSheetOpen = false;
+  }
 
-  els.settingsCard.classList.toggle("is-collapsed", isMobile && mobileSettingsCollapsed);
-  els.settingsToggleBtn.hidden = !isMobile;
-  els.settingsToggleBtn.textContent = (isMobile && mobileSettingsCollapsed) ? "열기" : "닫기";
-  els.settingsToggleBtn.setAttribute("aria-expanded", String(!(isMobile && mobileSettingsCollapsed)));
+  document.body.classList.toggle("mobile-mode-sheet-open", isMobile && mobileModeSheetOpen);
+  document.body.classList.toggle("mobile-handling-sheet-open", isMobile && mobileHandlingSheetOpen);
+
+  if (els.settingsToggleBtn) {
+    els.settingsToggleBtn.hidden = true;
+    els.settingsToggleBtn.setAttribute("aria-expanded", "false");
+  }
+
+  updateMobileModeSwitcher();
+  updateMobileStartButton();
 }
 
 function prettyKey(code) {
@@ -139,29 +233,34 @@ function prettyKey(code) {
 }
 
 // ===== HANDLING UI =====
-function updateHandlingTexts() {
-  const arrF = Number(els.arrSlider.value);
-  const dasF = Number(els.dasSlider.value);
-  const sdfRaw = Number(els.sdfSlider.value);
+function updateHandlingTextsFor(controls) {
+  if (!controls?.arrSlider) return;
+
+  const arrF = Number(controls.arrSlider.value);
+  const dasF = Number(controls.dasSlider.value);
+  const sdfRaw = Number(controls.sdfSlider.value);
 
   const arrMs = Math.round(arrF * FRAME_MS);
   const dasMs = Math.round(dasF * FRAME_MS);
-
-  // 소수점이 길게 늘어지지 않도록 표시 포맷 조정
   const fmtF = (v) => (Math.round(v * 100) / 100).toString();
 
-  els.arrFText.textContent = fmtF(arrF);
-  els.arrMsText.textContent = String(arrMs);
-  els.dasFText.textContent = fmtF(dasF);
-  els.dasMsText.textContent = String(dasMs);
+  if (controls.arrFText) controls.arrFText.textContent = fmtF(arrF);
+  if (controls.arrMsText) controls.arrMsText.textContent = String(arrMs);
+  if (controls.dasFText) controls.dasFText.textContent = fmtF(dasF);
+  if (controls.dasMsText) controls.dasMsText.textContent = String(dasMs);
 
-  if (sdfRaw >= 41) {
-    els.sdfText.textContent = "∞";
-  } else {
-    // 0.5 단위는 한 자리까지 보이게
-    const v = Math.round(sdfRaw * 2) / 2;
-    els.sdfText.textContent = (v % 1 === 0) ? String(v.toFixed(0)) : String(v.toFixed(1));
+  if (controls.sdfText) {
+    if (sdfRaw >= 41) controls.sdfText.textContent = "∞";
+    else {
+      const v = Math.round(sdfRaw * 2) / 2;
+      controls.sdfText.textContent = (v % 1 === 0) ? String(v.toFixed(0)) : String(v.toFixed(1));
+    }
   }
+}
+
+function updateHandlingTexts() {
+  updateHandlingTextsFor(desktopControls);
+  updateHandlingTextsFor(mobileControls);
 }
 
 
@@ -173,45 +272,49 @@ function updateModeUi(mode, subMode) {
 
   if (els.playMode) els.playMode.value = "solo";
   if (els.startBtn) els.startBtn.textContent = "게임 시작";
+  updateMobileModeSwitcher();
 }
 
-function applySettingsToForm(settings) {
-  const mode = settings.mode || "4wide";
-  const subMode = settings.subMode || "off";
+function applySettingsToControls(nextSettings, controls) {
+  if (!controls?.mode) return;
 
-  els.mode.value = mode;
-  if (els.playMode) els.playMode.value = "solo";
-  els.subMode.value = subMode;
-  if (els.gravityFixedInput) els.gravityFixedInput.value = String(settings.gravityFixedG ?? 0.02);
+  const mode = nextSettings.mode || "4wide";
+  const subMode = nextSettings.subMode || "off";
+  const arrF = nextSettings.arrF ?? (nextSettings.arrMs / FRAME_MS);
+  const dasF = nextSettings.dasF ?? (nextSettings.dasMs / FRAME_MS);
+  const sdfIsInf = (nextSettings.sdf === Infinity) || (nextSettings.sdf === "Infinity");
+  const sdfValue = sdfIsInf ? 41 : (nextSettings.sdfValue ?? Number(nextSettings.sdf));
+
+  controls.mode.value = mode;
+  if (controls.subMode) controls.subMode.value = subMode;
+  if (controls.gravityFixedInput) controls.gravityFixedInput.value = String(nextSettings.gravityFixedG ?? 0.02);
+  if (controls.arrSlider) controls.arrSlider.value = String(arrF);
+  if (controls.dasSlider) controls.dasSlider.value = String(dasF);
+  if (controls.sdfSlider) controls.sdfSlider.value = String(sdfValue);
+  if (controls.volume) controls.volume.value = String(nextSettings.volume ?? 35);
+}
+
+function applySettingsToForm(nextSettings) {
   if (els.botDiff) els.botDiff.value = "easy";
-
-  const arrF = settings.arrF ?? (settings.arrMs / FRAME_MS);
-  const dasF = settings.dasF ?? (settings.dasMs / FRAME_MS);
-  const sdfIsInf = (settings.sdf === Infinity) || (settings.sdf === "Infinity");
-  const sdfValue = sdfIsInf ? 41 : (settings.sdfValue ?? Number(settings.sdf));
-
-  els.arrSlider.value = String(arrF);
-  els.dasSlider.value = String(dasF);
-  els.sdfSlider.value = String(sdfValue);
-  els.volume.value = String(settings.volume ?? 35);
-
-  updateModeUi(mode, subMode);
+  applySettingsToControls(nextSettings, desktopControls);
+  applySettingsToControls(nextSettings, mobileControls);
+  updateModeUi(nextSettings.mode || "4wide", nextSettings.subMode || "off");
   updateHandlingTexts();
 }
 
-function readSettingsFromForm(base) {
-  const arrF = Number(els.arrSlider.value);
-  const dasF = Number(els.dasSlider.value);
-  const sdfRaw = Number(els.sdfSlider.value);
-  const sdfRounded = Math.round(sdfRaw * 2) / 2; // 0.5 단위 고정
+function readSettingsFromForm(base, controls = (isMobileUi() ? mobileControls : desktopControls)) {
+  const arrF = Number(controls.arrSlider?.value ?? desktopControls.arrSlider.value);
+  const dasF = Number(controls.dasSlider?.value ?? desktopControls.dasSlider.value);
+  const sdfRaw = Number(controls.sdfSlider?.value ?? desktopControls.sdfSlider.value);
+  const sdfRounded = Math.round(sdfRaw * 2) / 2;
 
   const arrMs = arrF * FRAME_MS;
   const dasMs = dasF * FRAME_MS;
   const sdf = sdfRounded >= 41 ? Infinity : Math.max(1, sdfRounded);
 
-  const mode = els.mode.value;
-  const subMode = els.subMode.value;
-  const gravityFixedG = Math.max(0.01, Math.min(100, Number(els.gravityFixedInput?.value ?? 0.02)));
+  const mode = controls.mode?.value ?? desktopControls.mode.value;
+  const subMode = controls.subMode?.value ?? desktopControls.subMode.value;
+  const gravityFixedG = Math.max(0.01, Math.min(100, Number(controls.gravityFixedInput?.value ?? desktopControls.gravityFixedInput?.value ?? 0.02)));
 
   return {
     ...base,
@@ -220,18 +323,13 @@ function readSettingsFromForm(base) {
     subMode,
     gravityFixedG,
     botDifficulty: "easy",
-
-    // handling
     arrF,
     dasF,
     sdfValue: sdfRounded,
     arrMs,
     dasMs,
     sdf,
-
-    // volume only (ghost/sound은 강제 ON)
-    volume: Number(els.volume.value),
-
+    volume: Number(controls.volume?.value ?? desktopControls.volume.value),
     keybind: { ...(base.keybind || {}) },
   };
 }
@@ -247,9 +345,9 @@ audio.setVolume01((settings.volume ?? 35) / 100);
 
 // game modules
 const input = new InputManager(settings.keybind);
-const game = new TetrisGame(input, audio);
+game = new TetrisGame(input, audio);
 const canvas = document.getElementById("gameCanvas");
-const renderer = new Renderer(canvas);
+renderer = new Renderer(canvas);
 
 const botRenderer = null;
 game.applySettings(settings);
@@ -273,27 +371,23 @@ function applyViewportScale() {
     : Number(viewport.dataset.designH || 920);
 
   const scale = Math.min(ww / designW, wh / designH);
-  const offsetX = Math.max(0, (ww - designW * scale) / 2);
-  const offsetY = Math.max(0, (wh - designH * scale) / 2);
 
   const dpr = window.devicePixelRatio || 1;
-  // scale/offset을 약간 스냅하면 초기 렌더에서 뿌옇게 보이는 현상이 줄어듭니다.
+  // scale을 약간 스냅하면 초기 렌더에서 뿌옇게 보이는 현상이 줄어듭니다.
   const snappedScale = Math.round(scale * dpr * 1000) / (dpr * 1000);
-  const snappedX = Math.round(offsetX);
-  const snappedY = Math.round(offsetY);
 
-  if ("zoom" in viewport.style) {
-    viewport.style.zoom = String(snappedScale);
-    viewport.style.transform = `translate3d(${snappedX}px, ${snappedY}px, 0)`;
-  } else {
-    viewport.style.transform = `translate3d(${snappedX}px, ${snappedY}px, 0) scale3d(${snappedScale}, ${snappedScale}, 1)`;
-  }
-  viewport.style.transformOrigin = "top left";
+  // 중앙 고정: 화면 크기가 바뀌어도 viewport가 좌우로 밀리지 않게
+  // 항상 50% / 50% 기준으로 translate(-50%, -50%) 후 scale만 적용합니다.
+  viewport.style.zoom = "";
+  viewport.style.transform = `translate3d(-50%, -50%, 0) scale3d(${snappedScale}, ${snappedScale}, 1)`;
+  viewport.style.transformOrigin = "center center";
 
   // 강제 리플로우(초기 뿌연 렌더링 완화)
   void viewport.offsetHeight;
   applyMobileSettingsUi();
+  updateMobileModeSwitcher();
 }
+
 
 function scheduleViewportScale() {
   // 폰트/레이아웃 초기 계산이 늦으면 깨져 보일 수 있어 2번 rAF로 재계산
@@ -400,9 +494,17 @@ function renderKeybindEditor() {
     const left = document.createElement("div");
     left.className = "label";
     const code = game.settings.keybind[action];
-    left.innerHTML = `<div>${label}</div><div class="key">현재: ${prettyKey(code)} (${code})</div>`;
+    left.innerHTML = `
+      <div class="keybind-top">
+        <div class="keybind-name">${label}</div>
+        <div class="keybind-current">
+          <span class="key">${prettyKey(code)}</span>
+          <span class="key-code">${code}</span>
+        </div>
+      </div>`;
 
     const btn = document.createElement("button");
+    btn.className = "keybind-change-btn";
     btn.textContent = "변경";
     btn.addEventListener("click", () => beginRebind(action, label));
 
@@ -467,14 +569,59 @@ function beginRebind(action, label) {
 
 renderKeybindEditor();
 initTouchControls();
-if (els.settingsToggleBtn) {
-  els.settingsToggleBtn.addEventListener("click", () => {
-    if (!document.body.classList.contains("mobile-ui")) return;
-    mobileSettingsCollapsed = !mobileSettingsCollapsed;
-    applyMobileSettingsUi();
-    scheduleViewportScale();
+
+function toggleMobileSheet(kind) {
+  if (!isMobileUi()) return;
+  if (kind === "mode") {
+    mobileModeSheetOpen = !mobileModeSheetOpen;
+    if (mobileModeSheetOpen) mobileHandlingSheetOpen = false;
+  } else {
+    mobileHandlingSheetOpen = !mobileHandlingSheetOpen;
+    if (mobileHandlingSheetOpen) mobileModeSheetOpen = false;
+  }
+  applyMobileSettingsUi();
+}
+
+if (els.mobileModeMenuBtn) {
+  els.mobileModeMenuBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggleMobileSheet("mode");
   });
 }
+
+if (els.mobileHandlingMenuBtn) {
+  els.mobileHandlingMenuBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    toggleMobileSheet("handling");
+  });
+}
+
+if (els.mobileModeClassicBtn) {
+  els.mobileModeClassicBtn.addEventListener("click", () => {
+    if ((settings.mode || "4wide") === "classic") return;
+    desktopControls.mode.value = "classic";
+    if (mobileControls.mode) mobileControls.mode.value = "classic";
+    onModeChanged("mobile");
+  });
+}
+
+if (els.mobileMode4WideBtn) {
+  els.mobileMode4WideBtn.addEventListener("click", () => {
+    if ((settings.mode || "4wide") === "4wide") return;
+    desktopControls.mode.value = "4wide";
+    if (mobileControls.mode) mobileControls.mode.value = "4wide";
+    onModeChanged("mobile");
+  });
+}
+
+window.addEventListener("pointerdown", (e) => {
+  if (!isMobileUi()) return;
+  const target = e.target;
+  if (!(target instanceof Element)) return;
+  if (target.closest(".mobile-sheet") || target.closest(".mobile-topbar") || target.closest(".mobile-mode-switch") || target.closest(".mobile-bottom-start")) return;
+  closeMobileSheets();
+});
+
 applyMobileSettingsUi();
 
 // ===== settings changes =====
@@ -496,40 +643,38 @@ function applySettingsLive(next) {
   audio.setVolume01(game.settings.volume / 100);
 }
 
-function onSettingsChanged() {
-  let next = readSettingsFromForm(game.settings);
+function onSettingsChanged(source = (isMobileUi() ? "mobile" : "desktop")) {
+  const controls = source === "mobile" ? mobileControls : desktopControls;
+  let next = readSettingsFromForm(game.settings, controls);
   next = enforceFixedSettings(next);
   saveSettings(next);
   settings = next;
 
-  // UI 토글
-  updateModeUi(next.mode || "4wide", next.subMode || "off");
-  updateHandlingTexts();
+  applySettingsToForm(next);
 
   if (game.state === "PLAYING") {
     applySettingsLive(next);
+    updateMobileStartButton();
     return;
   }
 
-  // TITLE/GAME_OVER에서는 전체 적용
   game.applySettings(next);
   input.keybind = game.settings.keybind;
-
   audio.setVolume01((game.settings.volume ?? 35) / 100);
 
   renderKeybindEditor();
   scheduleViewportScale();
+  updateMobileStartButton();
 }
 
-// ✅ 모드 관련 변경은 진행 중 게임에 바로 반영하지 않고 TITLE로 보냄
-function onModeChanged() {
-  let next = readSettingsFromForm(game.settings);
+function onModeChanged(source = (isMobileUi() ? "mobile" : "desktop")) {
+  const controls = source === "mobile" ? mobileControls : desktopControls;
+  let next = readSettingsFromForm(game.settings, controls);
   next = enforceFixedSettings(next);
   saveSettings(next);
   settings = next;
 
-  updateModeUi(next.mode || "4wide", next.subMode || "off");
-  updateHandlingTexts();
+  applySettingsToForm(next);
 
   game.applySettings(next);
   input.keybind = game.settings.keybind;
@@ -537,30 +682,39 @@ function onModeChanged() {
 
   renderKeybindEditor();
   scheduleViewportScale();
-
-  // 진행 중이든 아니든 항상 새 게임 대기 화면으로 전환
   game.toTitle();
+  closeMobileSheets();
+  updateMobileStartButton();
 }
 
 // 모드 관련 change
 [els.mode, els.subMode, els.gravityFixedInput].forEach((x) =>
-  x.addEventListener("change", onModeChanged)
+  x.addEventListener("change", () => onModeChanged("desktop"))
+);
+[els.mobileMode, els.mobileSubMode, els.mobileGravityFixedInput].forEach((x) =>
+  x?.addEventListener("change", () => onModeChanged("mobile"))
 );
 
 // 볼륨은 바로 반영
-els.volume.addEventListener("change", onSettingsChanged);
+els.volume.addEventListener("change", () => onSettingsChanged("desktop"));
+els.mobileVolume?.addEventListener("change", () => onSettingsChanged("mobile"));
 
 // handling sliders: input(즉시 반영)
-els.arrSlider.addEventListener("input", onSettingsChanged);
-els.dasSlider.addEventListener("input", onSettingsChanged);
-els.sdfSlider.addEventListener("input", onSettingsChanged);
+els.arrSlider.addEventListener("input", () => onSettingsChanged("desktop"));
+els.dasSlider.addEventListener("input", () => onSettingsChanged("desktop"));
+els.sdfSlider.addEventListener("input", () => onSettingsChanged("desktop"));
+els.mobileArrSlider?.addEventListener("input", () => onSettingsChanged("mobile"));
+els.mobileDasSlider?.addEventListener("input", () => onSettingsChanged("mobile"));
+els.mobileSdfSlider?.addEventListener("input", () => onSettingsChanged("mobile"));
 
-els.startBtn.addEventListener("click", () => {
-  let next = readSettingsFromForm(game.settings);
+function startFromControls(source = (isMobileUi() ? "mobile" : "desktop")) {
+  const controls = source === "mobile" ? mobileControls : desktopControls;
+  let next = readSettingsFromForm(game.settings, controls);
   next = enforceFixedSettings(next);
   saveSettings(next);
   settings = next;
 
+  applySettingsToForm(next);
   game.applySettings(next);
   input.keybind = game.settings.keybind;
 
@@ -569,9 +723,13 @@ els.startBtn.addEventListener("click", () => {
 
   renderKeybindEditor();
   scheduleViewportScale();
-
   game.start();
-});
+  closeMobileSheets();
+  updateMobileStartButton();
+}
+
+els.startBtn.addEventListener("click", () => startFromControls("desktop"));
+els.mobileStartBtn?.addEventListener("click", () => startFromControls(isMobileUi() ? "mobile" : "desktop"));
 
 els.restartBtn.addEventListener("click", () => {
   audio.setVolume01((game.settings.volume ?? 35) / 100);
@@ -580,15 +738,17 @@ els.restartBtn.addEventListener("click", () => {
   if (game.state === "PLAYING" || game.state === "GAME_OVER") {
     game.restart();
   } else {
-    let next = readSettingsFromForm(game.settings);
+    let next = readSettingsFromForm(game.settings, desktopControls);
     next = enforceFixedSettings(next);
     saveSettings(next);
     settings = next;
 
+    applySettingsToForm(next);
     game.applySettings(next);
     input.keybind = game.settings.keybind;
     game.start();
   }
+  updateMobileStartButton();
 });
 
 // ===== main loop =====
@@ -603,6 +763,8 @@ function updateHud(now) {
   if (els.incomingText) els.incomingText.textContent = String(game.incomingTotal ?? 0);
   if (els.attackText) els.attackText.textContent = String(game.attackTotal ?? 0);
   if (els.attackTotalText) els.attackTotalText.textContent = String(game.attackLast ?? 0);
+  updateMobileModeSwitcher();
+  updateMobileStartButton();
 }
 
 let prev = performance.now();

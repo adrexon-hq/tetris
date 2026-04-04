@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Web Tetris 0.3.58</title>
+  <title>Web Tetris 0.3.71</title>
   <link rel="stylesheet" href="./styles.css" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%2310171a'/><path d='M18 20h28v6H18zM18 30h18v6H18zM18 40h10v6H18z' fill='%236ea8fe'/></svg>" />
 </head>
@@ -17,12 +17,89 @@
   <div id="stage" class="stage">
     <div id="viewport" class="viewport" data-design-w="1480" data-design-h="920">
       <main class="app">
+        <div class="mobile-topbar" aria-label="모바일 빠른 설정">
+          <button id="mobileModeMenuBtn" class="mobile-topbar-btn mobile-icon-btn" type="button" aria-label="모드 메뉴 열기">☰</button>
+          <div id="mobileModeSwitch" class="mobile-mode-switch" aria-label="플레이 모드 선택">
+            <button id="mobileModeClassicBtn" class="mobile-mode-chip" type="button" data-mode="classic">Classic</button>
+            <button id="mobileMode4WideBtn" class="mobile-mode-chip" type="button" data-mode="4wide">4Wide</button>
+          </div>
+          <button id="mobileHandlingMenuBtn" class="mobile-topbar-btn mobile-icon-btn" type="button" aria-label="핸들링 메뉴 열기">⚙</button>
+        </div>
+
+        <div id="mobileModeSheet" class="mobile-sheet mobile-mode-sheet" aria-label="모바일 모드 설정">
+          <div class="mobile-sheet-card">
+            <div class="mobile-sheet-title">모드</div>
+            <label>플레이 모드
+              <select id="mobileModeSelect">
+                <option value="classic">Classic (10x20)</option>
+                <option value="4wide">4Wide</option>
+              </select>
+            </label>
+            <label>모드
+              <select id="mobileSubModeSelect">
+                <option value="off">프리 모드</option>
+                <option value="fixed">고정 중력</option>
+                <option value="accel">가속 중력</option>
+              </select>
+            </label>
+            <div class="gravity-fixed-only">
+              <label>고정 중력 (0.01 ~ 100)
+                <input id="mobileGravityFixedInput" type="number" min="0.01" max="100" step="0.01" value="0.02" />
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div id="mobileHandlingSheet" class="mobile-sheet mobile-handling-sheet" aria-label="모바일 핸들링 설정">
+          <div class="mobile-sheet-card">
+            <div class="mobile-sheet-title">HANDLING</div>
+            <div class="handling handling-mobile">
+              <div class="handling-row">
+                <div class="handling-left">
+                  <div class="handling-name">ARR</div>
+                  <input id="mobileArrSlider" type="range" min="0" max="10" step="0.1" value="2" />
+                </div>
+                <div class="handling-right">
+                  <div class="handling-meta"><span id="mobileArrMsText">33</span>MS</div>
+                  <div class="handling-meta"><span id="mobileArrFText">2</span>F</div>
+                </div>
+              </div>
+
+              <div class="handling-row">
+                <div class="handling-left">
+                  <div class="handling-name">DAS</div>
+                  <input id="mobileDasSlider" type="range" min="0" max="20" step="0.05" value="7.6" />
+                </div>
+                <div class="handling-right">
+                  <div class="handling-meta"><span id="mobileDasMsText">127</span>MS</div>
+                  <div class="handling-meta"><span id="mobileDasFText">7.6</span>F</div>
+                </div>
+              </div>
+
+              <div class="handling-row">
+                <div class="handling-left">
+                  <div class="handling-name">SDF</div>
+                  <input id="mobileSdfSlider" type="range" min="1" max="41" step="0.5" value="20" />
+                </div>
+                <div class="handling-right">
+                  <div class="handling-meta"><span id="mobileSdfText">20</span><span class="sdfX">x</span></div>
+                </div>
+              </div>
+            </div>
+
+            <label>볼륨
+              <input id="mobileVolumeInput" type="range" min="0" max="100" value="35" />
+            </label>
+          </div>
+        </div>
+
         <section class="panel left">
           <div class="card settings-card">
             <div class="settings-head">
               <h2>게임 설정</h2>
               <button id="settingsToggleBtn" class="settings-toggle" type="button" aria-expanded="false">열기</button>
             </div>
+            <p class="card-guide">게임 시작 전에 모드와 핸들링을 먼저 맞춰주세요.</p>
 
             <label class="mode-label">플레이 모드
               <select id="modeSelect">
@@ -107,15 +184,14 @@
 
         <section class="board-wrap">
           <canvas id="gameCanvas" width="560" height="840" aria-label="tetris board"></canvas>
+          <button id="mobileStartBtn" class="mobile-bottom-start" type="button">게임 시작</button>
         </section>
 
         <section class="panel right">
-
-
-          <!-- ✅ 키 설정 카드 (JS가 동적으로 줄을 채움) -->
+<!-- ✅ 키 설정 카드 (JS가 동적으로 줄을 채움) -->
           <div class="card keybind-card">
             <h2 class="keys-title">키 설정(변경 가능)</h2>
-            <p class="muted">“변경” 누르고 키 입력 (ESC: 취소) / 중복 키는 자동 교환</p>
+            <p class="card-guide key-guide">변경 버튼을 누른 뒤 원하는 키를 입력하세요. ESC는 취소되고, 중복 키는 자동으로 교환됩니다.</p>
             <div id="keybindEditor" class="keybind-editor"></div>
           </div>
 
@@ -189,7 +265,16 @@
       </div>
     </div>
 
-
-  <script type="module" src="./src/main.js?v=0.3.58"></script>
+    <div class="site-contact" aria-label="문의 메일">
+      <a class="contact-link" href="mailto:adrexonhq@gmail.com?subject=Web%20Tetris%20문의" title="문의 메일 보내기">
+        <span class="contact-icon" aria-hidden="true">✉</span>
+        <span class="contact-copy">
+          <span class="contact-title">문의하기</span>
+          <span class="contact-desc">버그 제보 / 오류 문의</span>
+        </span>
+        <span class="contact-email">adrexonhq@gmail.com</span>
+      </a>
+    </div>
+<script type="module" src="./src/main.js?v=0.3.71"></script>
 </body>
 </html>
