@@ -1,12 +1,22 @@
-console.log("bailis VERSION 0.3.77");
-import { DEFAULT_SETTINGS } from "./constants.js?v=0.3.77";
-import { InputManager } from "./input.js?v=0.3.77";
-import { TetrisGame } from "./game.js?v=0.3.77";
-import { Renderer } from "./renderer.js?v=0.3.77";
-import { AudioManager } from "./audio.js?v=0.3.77";
+console.log("bailis VERSION 0.3.88");
+import { DEFAULT_SETTINGS } from "./constants.js?v=0.3.88";
+import { InputManager } from "./input.js?v=0.3.88";
+import { TetrisGame } from "./game.js?v=0.3.88";
+import { Renderer } from "./renderer.js?v=0.3.88";
+import { AudioManager } from "./audio.js?v=0.3.88";
 
 const STORAGE_KEY = "web_tetris_settings_0.3.60";
 const FRAME_MS = 16.666666666666668;
+
+
+function formatSessionTime(sec) {
+  const total = Math.max(0, Math.floor(sec || 0));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
 
 function mergeSettings(raw) {
   const s = raw ?? {};
@@ -139,6 +149,11 @@ const els = {
   botStateText: document.getElementById("botStateText"),
   attackText: document.getElementById("attackText"),
   attackTotalText: document.getElementById("attackTotalText"),
+  ppsText: document.getElementById("ppsText"),
+  maxComboText: document.getElementById("maxComboText"),
+  timeText: document.getElementById("timeText"),
+  piecesText: document.getElementById("piecesText"),
+  attackTotalStatText: document.getElementById("attackTotalStatText"),
 };
 
 const desktopControls = {
@@ -387,20 +402,35 @@ const viewport = document.getElementById("viewport");
 function applyViewportScale() {
   if (!viewport) return;
 
-  const ww = window.innerWidth;
-  const wh = window.innerHeight;
+  const vv = window.visualViewport;
+  const ww = Math.round(vv?.width || window.innerWidth || document.documentElement.clientWidth || 0);
+  const wh = Math.round(vv?.height || window.innerHeight || document.documentElement.clientHeight || 0);
   const isMobileUi = window.matchMedia("(max-width: 1100px), (pointer: coarse)").matches;
 
   document.body.classList.toggle("mobile-ui", isMobileUi);
   document.body.classList.toggle("desktop-quick-ui", !isMobileUi);
   relocateKeybindCard();
 
-  const designW = isMobileUi
-    ? (parseFloat(getComputedStyle(viewport).width) || 430)
+  const MOBILE_DESIGN_W = 390;
+  const MOBILE_DESIGN_H = 736;
+  let designW = isMobileUi
+    ? MOBILE_DESIGN_W
     : Number(viewport.dataset.designW || 1480);
-  const designH = isMobileUi
-    ? (parseFloat(getComputedStyle(viewport).height) || 900)
+  let designH = isMobileUi
+    ? MOBILE_DESIGN_H
     : Number(viewport.dataset.designH || 920);
+
+  if (isMobileUi) {
+    viewport.style.width = `${MOBILE_DESIGN_W}px`;
+    document.documentElement.style.setProperty('--mobile-design-h', `${MOBILE_DESIGN_H}px`);
+    const appEl = viewport.querySelector('.app');
+    if (appEl) appEl.style.height = `${MOBILE_DESIGN_H}px`;
+    viewport.style.height = `${MOBILE_DESIGN_H}px`;
+  } else {
+    document.documentElement.style.removeProperty('--mobile-design-h');
+    viewport.style.width = `${Number(viewport.dataset.designW || 1480)}px`;
+    viewport.style.height = `${Number(viewport.dataset.designH || 920)}px`;
+  }
 
   const scale = Math.min(ww / designW, wh / designH);
 
@@ -408,11 +438,18 @@ function applyViewportScale() {
   // scale을 약간 스냅하면 초기 렌더에서 뿌옇게 보이는 현상이 줄어듭니다.
   const snappedScale = Math.round(scale * dpr * 1000) / (dpr * 1000);
 
-  // 중앙 고정: 화면 크기가 바뀌어도 viewport가 좌우로 밀리지 않게
-  // 항상 50% / 50% 기준으로 translate(-50%, -50%) 후 scale만 적용합니다.
   viewport.style.zoom = "";
-  viewport.style.transform = `translate3d(-50%, -50%, 0) scale3d(${snappedScale}, ${snappedScale}, 1)`;
-  viewport.style.transformOrigin = "center center";
+  if (isMobileUi) {
+    viewport.style.top = "0";
+    viewport.style.left = "50%";
+    viewport.style.transform = `translate3d(-50%, 0, 0) scale3d(${snappedScale}, ${snappedScale}, 1)`;
+    viewport.style.transformOrigin = "top center";
+  } else {
+    viewport.style.top = "50%";
+    viewport.style.left = "50%";
+    viewport.style.transform = `translate3d(-50%, -50%, 0) scale3d(${snappedScale}, ${snappedScale}, 1)`;
+    viewport.style.transformOrigin = "center center";
+  }
 
   // 강제 리플로우(초기 뿌연 렌더링 완화)
   void viewport.offsetHeight;
@@ -428,6 +465,10 @@ function scheduleViewportScale() {
 }
 
 window.addEventListener("resize", applyViewportScale);
+if (window.visualViewport) {
+  window.visualViewport.addEventListener("resize", scheduleViewportScale);
+  window.visualViewport.addEventListener("scroll", scheduleViewportScale);
+}
 applyViewportScale();
 scheduleViewportScale();
 window.addEventListener("load", scheduleViewportScale);
@@ -838,6 +879,14 @@ function updateHud(now) {
   if (els.incomingText) els.incomingText.textContent = String(game.incomingTotal ?? 0);
   if (els.attackText) els.attackText.textContent = String(game.attackTotal ?? 0);
   if (els.attackTotalText) els.attackTotalText.textContent = String(game.attackLast ?? 0);
+
+  const pps = (game.playTimeSec > 0) ? (game.piecesPlaced / game.playTimeSec) : 0;
+  if (els.ppsText) els.ppsText.textContent = pps.toFixed(2);
+  if (els.maxComboText) els.maxComboText.textContent = String(game.maxCombo ?? 0);
+  if (els.timeText) els.timeText.textContent = formatSessionTime(game.playTimeSec ?? 0);
+  if (els.piecesText) els.piecesText.textContent = String(game.piecesPlaced ?? 0);
+  if (els.attackTotalStatText) els.attackTotalStatText.textContent = String(game.attackTotal ?? 0);
+
   updateMobileModeSwitcher();
   updateMobileStartButton();
 }

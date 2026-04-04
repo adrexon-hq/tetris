@@ -1,6 +1,6 @@
-import { DEFAULT_SETTINGS, getKickData, getKickData180 } from "./constants.js?v=0.3.76";
-import { Board } from "./board.js?v=0.3.76";
-import { BagRandomizer } from "./randomizer.js?v=0.3.76";
+import { DEFAULT_SETTINGS, getKickData, getKickData180 } from "./constants.js?v=0.3.88";
+import { Board } from "./board.js?v=0.3.88";
+import { BagRandomizer } from "./randomizer.js?v=0.3.88";
 
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
@@ -69,6 +69,8 @@ export class TetrisGame {
     // 공격(딜) HUD
     this.attackLast = 0;
     this.attackTotal = 0;
+    this.piecesPlaced = 0;
+    this.maxCombo = 0;
 
     // 팝업(공격/올클리어)
     this.popup = null;
@@ -196,6 +198,8 @@ export class TetrisGame {
     this.playTimeSec = 0;
     this.attackLast = 0;
     this.attackTotal = 0;
+    this.piecesPlaced = 0;
+    this.maxCombo = 0;
     this.mobileFreeLockTimerMs = 0;
     this.mobileActionThisFrame = false;
 
@@ -330,6 +334,7 @@ export class TetrisGame {
 
     const piece = { ...this.currentPiece };
     this.board.lock(piece);
+    this.piecesPlaced += 1;
 
     if (this.audio && this.settings.soundEnabled) {
       this.audio.play("lock");
@@ -427,6 +432,7 @@ export class TetrisGame {
     // combo
     if (cleared > 0) {
       this.combo += 1;
+      this.maxCombo = Math.max(this.maxCombo, this.combo + 1);
       if (this.combo > 0) add += this.combo * 50;
     } else {
       this.combo = -1;

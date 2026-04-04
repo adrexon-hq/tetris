@@ -1,6 +1,6 @@
-import { PIECE_CELLS } from "./constants.js?v=0.3.76";
-import { Board } from "./board.js?v=0.3.76";
-import { BagRandomizer } from "./randomizer.js?v=0.3.76";
+import { PIECE_CELLS } from "./constants.js?v=0.3.88";
+import { Board } from "./board.js?v=0.3.88";
+import { BagRandomizer } from "./randomizer.js?v=0.3.88";
 
 function clamp(n, a, b) { return Math.max(a, Math.min(b, n)); }
 
