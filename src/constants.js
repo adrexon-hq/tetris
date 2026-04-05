@@ -112,6 +112,7 @@ export function getKickData180(type, from, to) {
 export const DEFAULT_SETTINGS = {
   mode: "4wide",
   subMode: "off",
+  garbageSprint: "off",
 
   // play
   playMode: "solo", // solo | bot

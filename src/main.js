@@ -1,12 +1,408 @@
-console.log("bailis VERSION 0.3.88");
-import { DEFAULT_SETTINGS } from "./constants.js?v=0.3.88";
-import { InputManager } from "./input.js?v=0.3.88";
-import { TetrisGame } from "./game.js?v=0.3.88";
-import { Renderer } from "./renderer.js?v=0.3.88";
-import { AudioManager } from "./audio.js?v=0.3.88";
+console.log("bailis VERSION 0.3.92");
+import { DEFAULT_SETTINGS } from "./constants.js?v=0.3.92";
+import { InputManager } from "./input.js?v=0.3.92";
+import { TetrisGame } from "./game.js?v=0.3.92";
+import { Renderer } from "./renderer.js?v=0.3.92";
+import { AudioManager } from "./audio.js?v=0.3.92";
 
 const STORAGE_KEY = "web_tetris_settings_0.3.60";
+const LANG_STORAGE_KEY = "bailis_ui_lang_0.3.92";
 const FRAME_MS = 16.666666666666668;
+
+const I18N = {
+  ko: {
+    htmlLang: "ko",
+    languageLabel: "언어",
+    languageOptions: { ko: "🇰🇷 한국어", en: "🇺🇸 English", ja: "🇯🇵 日本語", zh: "🇨🇳 简体中文" },
+    modeMenuAria: "모드 메뉴 열기",
+    handlingMenuAria: "핸들링 메뉴 열기",
+    modeSwitchAria: "플레이 모드 선택",
+    modeSheetAria: "모바일 모드 설정",
+    handlingSheetAria: "모바일 핸들링 설정",
+    mobileSystemAria: "모바일 시스템 버튼",
+    touchControlsAria: "모바일 조작 버튼",
+    contactAria: "문의 메일",
+    boardAria: "테트리스 보드",
+    botAria: "봇 보드",
+    modeSheetTitle: "모드",
+    playModeLabel: "플레이 모드",
+    gravityModeLabel: "모드",
+    fixedGravityLabel: "고정 중력 (0.01 ~ 100)",
+    handlingTitle: "HANDLING",
+    volumeLabel: "볼륨",
+    keySettingsTitle: "키 설정",
+    keySettingsTitleFull: "키 설정(변경 가능)",
+    keySettingsGuide: "변경 버튼을 누른 뒤 원하는 키를 입력하세요. ESC는 취소되고, 중복 키는 자동으로 교환됩니다.",
+    settingsTitle: "게임 설정",
+    settingsGuide: "게임 시작 전에 모드와 핸들링을 먼저 맞춰주세요.",
+    settingsMuted: "Lock Delay, Preview는 기본값으로 고정되어 있습니다.",
+    open: "열기",
+    change: "변경",
+    startGame: "게임 시작",
+    restartGame: "재시작",
+    restartWithKey: "재시작 (R)",
+    exit: "EXIT",
+    restartShort: "RESTART",
+    modeClassic: "Classic",
+    modeClassicOption: "Classic (10x20)",
+    mode4Wide: "4Wide",
+    subModeOff: "프리 모드",
+    subModeFixed: "고정 중력",
+    subModeAccel: "가속 중력",
+    garbageSprintLabel: "가비지 스프린트",
+    garbageSprintOff: "끔",
+    garbageSprintLow: "하 (5초)",
+    garbageSprintMid: "중 (2~3초)",
+    garbageSprintHigh: "상 (2초 / 3줄)",
+    contactTitle: "문의하기",
+    contactDesc: "버그 제보 / 오류 문의",
+    session: "SESSION",
+    pps: "PPS",
+    maxCombo: "MAX COMBO",
+    time: "TIME",
+    pieces: "PIECES",
+    attack: "ATTACK",
+    hold: "HOLD",
+    next: "NEXT",
+    combo: "COMBO",
+    total: "TOTAL",
+    allClearShort: "올클리어",
+    allClear: "ALL CLEAR",
+    victory: "VICTORY",
+    victoryHint: "R 키로 재시작",
+    clickBoardOrEnter: "보드를 클릭하거나 Enter로 시작",
+    pressStartButton: "게임 시작 버튼을 누르세요",
+    gameOver: "GAME OVER",
+    gameOverHint: "R: 재시작 / Esc: 타이틀",
+    action_moveLeft: "왼쪽 이동",
+    action_moveRight: "오른쪽 이동",
+    action_softDrop: "소프트 드랍",
+    action_hardDrop: "하드 드랍",
+    action_rotateCW: "회전(CW)",
+    action_rotateCCW: "회전(CCW)",
+    action_rotate180: "회전(180)",
+    action_hold: "홀드",
+    action_restart: "재시작",
+    action_exit: "타이틀/종료(ESC)",
+    overlayChangeKey: "키 변경: {label}",
+    overlayPressKey: "원하는 키를 누르세요.",
+    overlayCancel: "(ESC: 취소)",
+    touchLeft: "LEFT",
+    touchRight: "RIGHT",
+    touchSoft: "SOFT",
+    touchHard: "HARD",
+    touchHold: "HOLD",
+    touchCCW: "CCW",
+    touchCW: "CW",
+    touchTurn: "TURN",
+  },
+  en: {
+    htmlLang: "en",
+    languageLabel: "Language",
+    languageOptions: { ko: "🇰🇷 Korean", en: "🇺🇸 English", ja: "🇯🇵 Japanese", zh: "🇨🇳 Chinese" },
+    modeMenuAria: "Open mode menu",
+    handlingMenuAria: "Open handling menu",
+    modeSwitchAria: "Select play mode",
+    modeSheetAria: "Mode settings",
+    handlingSheetAria: "Handling settings",
+    mobileSystemAria: "Mobile system buttons",
+    touchControlsAria: "Mobile controls",
+    contactAria: "Contact email",
+    boardAria: "Tetris board",
+    botAria: "Bot board",
+    modeSheetTitle: "Mode",
+    playModeLabel: "Play Mode",
+    gravityModeLabel: "Gravity Mode",
+    fixedGravityLabel: "Fixed Gravity (0.01 ~ 100)",
+    handlingTitle: "HANDLING",
+    volumeLabel: "Volume",
+    keySettingsTitle: "Key Settings",
+    keySettingsTitleFull: "Key Settings",
+    keySettingsGuide: "Press change, then press the key you want. ESC cancels, and duplicate keys are swapped automatically.",
+    settingsTitle: "Game Settings",
+    settingsGuide: "Set your mode and handling before starting.",
+    settingsMuted: "Lock Delay and Preview stay at the default values.",
+    open: "Open",
+    change: "Change",
+    startGame: "Start",
+    restartGame: "Restart",
+    restartWithKey: "Restart (R)",
+    exit: "EXIT",
+    restartShort: "RESTART",
+    modeClassic: "Classic",
+    modeClassicOption: "Classic (10x20)",
+    mode4Wide: "4Wide",
+    subModeOff: "Free Mode",
+    subModeFixed: "Fixed Gravity",
+    subModeAccel: "Accel Gravity",
+    garbageSprintLabel: "Garbage Sprint",
+    garbageSprintOff: "Off",
+    garbageSprintLow: "Low (5s)",
+    garbageSprintMid: "Mid (2–3s)",
+    garbageSprintHigh: "High (2s / 3 lines)",
+    contactTitle: "Contact",
+    contactDesc: "Bug reports / error support",
+    session: "SESSION",
+    pps: "PPS",
+    maxCombo: "MAX COMBO",
+    time: "TIME",
+    pieces: "PIECES",
+    attack: "ATTACK",
+    hold: "HOLD",
+    next: "NEXT",
+    combo: "COMBO",
+    total: "TOTAL",
+    allClearShort: "ALL CLEAR",
+    allClear: "ALL CLEAR",
+    victory: "VICTORY",
+    victoryHint: "Press R to restart",
+    clickBoardOrEnter: "Click the board or press Enter",
+    pressStartButton: "Press Start",
+    gameOver: "GAME OVER",
+    gameOverHint: "R: Restart / Esc: Title",
+    action_moveLeft: "Move Left",
+    action_moveRight: "Move Right",
+    action_softDrop: "Soft Drop",
+    action_hardDrop: "Hard Drop",
+    action_rotateCW: "Rotate (CW)",
+    action_rotateCCW: "Rotate (CCW)",
+    action_rotate180: "Rotate (180)",
+    action_hold: "Hold",
+    action_restart: "Restart",
+    action_exit: "Title / Exit (ESC)",
+    overlayChangeKey: "Change key: {label}",
+    overlayPressKey: "Press the key you want.",
+    overlayCancel: "(ESC: cancel)",
+    touchLeft: "LEFT",
+    touchRight: "RIGHT",
+    touchSoft: "SOFT",
+    touchHard: "HARD",
+    touchHold: "HOLD",
+    touchCCW: "CCW",
+    touchCW: "CW",
+    touchTurn: "TURN",
+  },
+  ja: {
+    htmlLang: "ja",
+    languageLabel: "言語",
+    languageOptions: { ko: "🇰🇷 韓国語", en: "🇺🇸 English", ja: "🇯🇵 日本語", zh: "🇨🇳 中文" },
+    modeMenuAria: "モードメニューを開く",
+    handlingMenuAria: "ハンドリングメニューを開く",
+    modeSwitchAria: "プレイモードを選択",
+    modeSheetAria: "モード設定",
+    handlingSheetAria: "ハンドリング設定",
+    mobileSystemAria: "モバイルシステムボタン",
+    touchControlsAria: "モバイル操作ボタン",
+    contactAria: "お問い合わせメール",
+    boardAria: "テトリスボード",
+    botAria: "ボットボード",
+    modeSheetTitle: "モード",
+    playModeLabel: "プレイモード",
+    gravityModeLabel: "重力モード",
+    fixedGravityLabel: "固定重力 (0.01 ~ 100)",
+    handlingTitle: "HANDLING",
+    volumeLabel: "音量",
+    keySettingsTitle: "キー設定",
+    keySettingsTitleFull: "キー設定",
+    keySettingsGuide: "変更を押してから割り当てたいキーを入力してください。ESCでキャンセル、重複キーは自動で入れ替わります。",
+    settingsTitle: "ゲーム設定",
+    settingsGuide: "開始前にモードとハンドリングを調整してください。",
+    settingsMuted: "Lock Delay と Preview は既定値に固定されています。",
+    open: "開く",
+    change: "変更",
+    startGame: "開始",
+    restartGame: "再開",
+    restartWithKey: "再開 (R)",
+    exit: "EXIT",
+    restartShort: "RESTART",
+    modeClassic: "Classic",
+    modeClassicOption: "Classic (10x20)",
+    mode4Wide: "4Wide",
+    subModeOff: "フリーモード",
+    subModeFixed: "固定重力",
+    subModeAccel: "加速重力",
+    garbageSprintLabel: "ガベージスプリント",
+    garbageSprintOff: "オフ",
+    garbageSprintLow: "低 (5秒)",
+    garbageSprintMid: "中 (2~3秒)",
+    garbageSprintHigh: "高 (2秒 / 3ライン)",
+    contactTitle: "お問い合わせ",
+    contactDesc: "バグ報告 / エラー対応",
+    session: "SESSION",
+    pps: "PPS",
+    maxCombo: "MAX COMBO",
+    time: "TIME",
+    pieces: "PIECES",
+    attack: "ATTACK",
+    hold: "HOLD",
+    next: "NEXT",
+    combo: "COMBO",
+    total: "TOTAL",
+    allClearShort: "オールクリア",
+    allClear: "ALL CLEAR",
+    victory: "VICTORY",
+    victoryHint: "Rキーで再開",
+    clickBoardOrEnter: "ボードをクリック、または Enter で開始",
+    pressStartButton: "開始ボタンを押してください",
+    gameOver: "GAME OVER",
+    gameOverHint: "R: 再開 / Esc: タイトル",
+    action_moveLeft: "左移動",
+    action_moveRight: "右移動",
+    action_softDrop: "ソフトドロップ",
+    action_hardDrop: "ハードドロップ",
+    action_rotateCW: "回転(CW)",
+    action_rotateCCW: "回転(CCW)",
+    action_rotate180: "回転(180)",
+    action_hold: "ホールド",
+    action_restart: "再開",
+    action_exit: "タイトル / 終了(ESC)",
+    overlayChangeKey: "キー変更: {label}",
+    overlayPressKey: "設定したいキーを押してください。",
+    overlayCancel: "(ESC: キャンセル)",
+    touchLeft: "LEFT",
+    touchRight: "RIGHT",
+    touchSoft: "SOFT",
+    touchHard: "HARD",
+    touchHold: "HOLD",
+    touchCCW: "CCW",
+    touchCW: "CW",
+    touchTurn: "TURN",
+  },
+  zh: {
+    htmlLang: "zh-CN",
+    languageLabel: "语言",
+    languageOptions: { ko: "🇰🇷 韩语", en: "🇺🇸 English", ja: "🇯🇵 日本語", zh: "🇨🇳 简体中文" },
+    modeMenuAria: "打开模式菜单",
+    handlingMenuAria: "打开操作设置",
+    modeSwitchAria: "选择游玩模式",
+    modeSheetAria: "模式设置",
+    handlingSheetAria: "操作设置",
+    mobileSystemAria: "移动端系统按钮",
+    touchControlsAria: "移动端操作按钮",
+    contactAria: "联系邮箱",
+    boardAria: "俄罗斯方块棋盘",
+    botAria: "机器人棋盘",
+    modeSheetTitle: "模式",
+    playModeLabel: "游玩模式",
+    gravityModeLabel: "重力模式",
+    fixedGravityLabel: "固定重力 (0.01 ~ 100)",
+    handlingTitle: "HANDLING",
+    volumeLabel: "音量",
+    keySettingsTitle: "按键设置",
+    keySettingsTitleFull: "按键设置",
+    keySettingsGuide: "点击更改后按下想要的按键。ESC 取消，重复按键会自动互换。",
+    settingsTitle: "游戏设置",
+    settingsGuide: "开始前先调整模式和操作手感。",
+    settingsMuted: "Lock Delay 和 Preview 保持默认值。",
+    open: "打开",
+    change: "更改",
+    startGame: "开始",
+    restartGame: "重开",
+    restartWithKey: "重开 (R)",
+    exit: "EXIT",
+    restartShort: "RESTART",
+    modeClassic: "Classic",
+    modeClassicOption: "Classic (10x20)",
+    mode4Wide: "4Wide",
+    subModeOff: "自由模式",
+    subModeFixed: "固定重力",
+    subModeAccel: "加速重力",
+    garbageSprintLabel: "垃圾冲刺",
+    garbageSprintOff: "关闭",
+    garbageSprintLow: "低 (5秒)",
+    garbageSprintMid: "中 (2~3秒)",
+    garbageSprintHigh: "高 (2秒 / 3行)",
+    contactTitle: "联系",
+    contactDesc: "错误反馈 / 问题咨询",
+    session: "SESSION",
+    pps: "PPS",
+    maxCombo: "MAX COMBO",
+    time: "TIME",
+    pieces: "PIECES",
+    attack: "ATTACK",
+    hold: "HOLD",
+    next: "NEXT",
+    combo: "COMBO",
+    total: "TOTAL",
+    allClearShort: "全清",
+    allClear: "ALL CLEAR",
+    victory: "VICTORY",
+    victoryHint: "按 R 重开",
+    clickBoardOrEnter: "点击棋盘或按 Enter 开始",
+    pressStartButton: "请按开始按钮",
+    gameOver: "GAME OVER",
+    gameOverHint: "R: 重开 / Esc: 标题",
+    action_moveLeft: "向左移动",
+    action_moveRight: "向右移动",
+    action_softDrop: "软降",
+    action_hardDrop: "硬降",
+    action_rotateCW: "旋转(CW)",
+    action_rotateCCW: "旋转(CCW)",
+    action_rotate180: "旋转(180)",
+    action_hold: "暂存",
+    action_restart: "重开",
+    action_exit: "标题 / 退出(ESC)",
+    overlayChangeKey: "按键更改: {label}",
+    overlayPressKey: "请按下想设置的按键。",
+    overlayCancel: "(ESC: 取消)",
+    touchLeft: "LEFT",
+    touchRight: "RIGHT",
+    touchSoft: "SOFT",
+    touchHard: "HARD",
+    touchHold: "HOLD",
+    touchCCW: "CCW",
+    touchCW: "CW",
+    touchTurn: "TURN",
+  },
+};
+const ACTIONS = [
+  "moveLeft",
+  "moveRight",
+  "softDrop",
+  "hardDrop",
+  "rotateCW",
+  "rotateCCW",
+  "rotate180",
+  "hold",
+  "restart",
+  "exit",
+];
+let currentLocale = loadLocale();
+
+function loadLocale() {
+  try {
+    const raw = localStorage.getItem(LANG_STORAGE_KEY);
+    return I18N[raw] ? raw : "ko";
+  } catch {
+    return "ko";
+  }
+}
+
+function saveLocale(locale) {
+  try {
+    localStorage.setItem(LANG_STORAGE_KEY, locale);
+  } catch {}
+}
+
+function t(key, vars = null) {
+  const dict = I18N[currentLocale] || I18N.ko;
+  let out = dict[key] ?? I18N.ko[key] ?? key;
+  if (vars && typeof out === "string") {
+    for (const [k, v] of Object.entries(vars)) out = out.replaceAll(`{${k}}`, String(v));
+  }
+  return out;
+}
+
+function getActionLabel(action) {
+  return t(`action_${action}`);
+}
+
+function setLeadingLabelText(el, value) {
+  if (!el) return;
+  const node = [...el.childNodes].find((x) => x.nodeType === Node.TEXT_NODE);
+  if (node) node.textContent = value;
+  else el.prepend(document.createTextNode(value));
+}
 
 
 function formatSessionTime(sec) {
@@ -65,6 +461,7 @@ function enforceFixedSettings(next) {
   // 중력 모드 정규화
   if (next.subMode === "infinite") next.subMode = "off";
   if (!["off", "fixed", "accel"].includes(next.subMode)) next.subMode = "off";
+  if (!["off", "low", "mid", "high"].includes(next.garbageSprint)) next.garbageSprint = "off";
 
   // 중력 값 보정
   next.gravityBaseG = 0.02;
@@ -87,6 +484,7 @@ const els = {
   mode: document.getElementById("modeSelect"),
 
   subMode: document.getElementById("subModeSelect"),
+  garbageSprint: document.getElementById("garbageSprintSelect"),
   gravityFixedInput: document.getElementById("gravityFixedInput"),
   botDiff: document.getElementById("botDiffSelect"),
 
@@ -114,8 +512,10 @@ const els = {
   mobileMode4WideBtn: document.getElementById("mobileMode4WideBtn"),
   mobileModeSheet: document.getElementById("mobileModeSheet"),
   mobileHandlingSheet: document.getElementById("mobileHandlingSheet"),
+  languageSelect: document.getElementById("languageSelect"),
   mobileMode: document.getElementById("mobileModeSelect"),
   mobileSubMode: document.getElementById("mobileSubModeSelect"),
+  mobileGarbageSprint: document.getElementById("mobileGarbageSprintSelect"),
   mobileGravityFixedInput: document.getElementById("mobileGravityFixedInput"),
   mobileArrSlider: document.getElementById("mobileArrSlider"),
   mobileDasSlider: document.getElementById("mobileDasSlider"),
@@ -159,6 +559,7 @@ const els = {
 const desktopControls = {
   mode: els.mode,
   subMode: els.subMode,
+  garbageSprint: els.garbageSprint,
   gravityFixedInput: els.gravityFixedInput,
   arrSlider: els.arrSlider,
   dasSlider: els.dasSlider,
@@ -177,6 +578,7 @@ let renderer = null;
 const mobileControls = {
   mode: els.mobileMode,
   subMode: els.mobileSubMode,
+  garbageSprint: els.mobileGarbageSprint,
   gravityFixedInput: els.mobileGravityFixedInput,
   arrSlider: els.mobileArrSlider,
   dasSlider: els.mobileDasSlider,
@@ -228,7 +630,7 @@ function closeMobileSheets() {
 
 
 function getModeLabel(mode) {
-  return mode === "classic" ? "Classic" : "4Wide";
+  return mode === "classic" ? t("modeClassic") : t("mode4Wide");
 }
 
 function updateMobileModeSwitcher() {
@@ -244,7 +646,7 @@ function updateMobileModeSwitcher() {
 function updateMobileStartButton() {
   if (!els.mobileStartBtn) return;
   const icon = game?.state === "PLAYING" ? "↻" : "▶";
-  const label = game?.state === "PLAYING" ? "재시작" : "게임 시작";
+  const label = game?.state === "PLAYING" ? t("restartGame") : t("startGame");
   els.mobileStartBtn.innerHTML = `<span class="icon">${icon}</span><span class="text">${label}</span>`;
 }
 
@@ -316,7 +718,7 @@ function updateModeUi(mode, subMode) {
   document.body.classList.add("solo");
 
   if (els.playMode) els.playMode.value = "solo";
-  if (els.startBtn) els.startBtn.textContent = "게임 시작";
+  if (els.startBtn) els.startBtn.textContent = t("startGame");
   updateMobileModeSwitcher();
 }
 
@@ -325,6 +727,7 @@ function applySettingsToControls(nextSettings, controls) {
 
   const mode = nextSettings.mode || "4wide";
   const subMode = nextSettings.subMode || "off";
+  const garbageSprint = nextSettings.garbageSprint || "off";
   const arrF = nextSettings.arrF ?? (nextSettings.arrMs / FRAME_MS);
   const dasF = nextSettings.dasF ?? (nextSettings.dasMs / FRAME_MS);
   const sdfIsInf = (nextSettings.sdf === Infinity) || (nextSettings.sdf === "Infinity");
@@ -332,6 +735,7 @@ function applySettingsToControls(nextSettings, controls) {
 
   controls.mode.value = mode;
   if (controls.subMode) controls.subMode.value = subMode;
+  if (controls.garbageSprint) controls.garbageSprint.value = garbageSprint;
   if (controls.gravityFixedInput) controls.gravityFixedInput.value = String(nextSettings.gravityFixedG ?? 0.02);
   if (controls.arrSlider) controls.arrSlider.value = String(arrF);
   if (controls.dasSlider) controls.dasSlider.value = String(dasF);
@@ -359,6 +763,7 @@ function readSettingsFromForm(base, controls = (isMobileUi() ? mobileControls : 
 
   const mode = controls.mode?.value ?? desktopControls.mode.value;
   const subMode = controls.subMode?.value ?? desktopControls.subMode.value;
+  const garbageSprint = controls.garbageSprint?.value ?? desktopControls.garbageSprint?.value ?? "off";
   const gravityFixedG = Math.max(0.01, Math.min(100, Number(controls.gravityFixedInput?.value ?? desktopControls.gravityFixedInput?.value ?? 0.02)));
 
   return {
@@ -366,6 +771,7 @@ function readSettingsFromForm(base, controls = (isMobileUi() ? mobileControls : 
     mode,
     playMode: "solo",
     subMode,
+    garbageSprint,
     gravityFixedG,
     botDifficulty: "easy",
     arrF,
@@ -377,6 +783,118 @@ function readSettingsFromForm(base, controls = (isMobileUi() ? mobileControls : 
     volume: Number(controls.volume?.value ?? desktopControls.volume.value),
     keybind: { ...(base.keybind || {}) },
   };
+}
+
+function applyTranslations() {
+  const lang = I18N[currentLocale] || I18N.ko;
+  document.documentElement.lang = lang.htmlLang || currentLocale;
+
+  if (els.languageSelect) {
+    els.languageSelect.value = currentLocale;
+    for (const option of els.languageSelect.options) {
+      option.textContent = lang.languageOptions?.[option.value] || option.textContent;
+    }
+  }
+
+  const modeOptClassic = [els.mode, els.mobileMode].map((sel) => sel?.querySelector('option[value="classic"]'));
+  const modeOpt4Wide = [els.mode, els.mobileMode].map((sel) => sel?.querySelector('option[value="4wide"]'));
+  const subOff = [els.subMode, els.mobileSubMode].map((sel) => sel?.querySelector('option[value="off"]'));
+  const subFixed = [els.subMode, els.mobileSubMode].map((sel) => sel?.querySelector('option[value="fixed"]'));
+  const subAccel = [els.subMode, els.mobileSubMode].map((sel) => sel?.querySelector('option[value="accel"]'));
+  const garbageOff = [els.garbageSprint, els.mobileGarbageSprint].map((sel) => sel?.querySelector('option[value="off"]'));
+  const garbageLow = [els.garbageSprint, els.mobileGarbageSprint].map((sel) => sel?.querySelector('option[value="low"]'));
+  const garbageMid = [els.garbageSprint, els.mobileGarbageSprint].map((sel) => sel?.querySelector('option[value="mid"]'));
+  const garbageHigh = [els.garbageSprint, els.mobileGarbageSprint].map((sel) => sel?.querySelector('option[value="high"]'));
+  modeOptClassic.forEach((el) => { if (el) el.textContent = lang.modeClassicOption; });
+  modeOpt4Wide.forEach((el) => { if (el) el.textContent = lang.mode4Wide; });
+  subOff.forEach((el) => { if (el) el.textContent = lang.subModeOff; });
+  subFixed.forEach((el) => { if (el) el.textContent = lang.subModeFixed; });
+  subAccel.forEach((el) => { if (el) el.textContent = lang.subModeAccel; });
+  garbageOff.forEach((el) => { if (el) el.textContent = lang.garbageSprintOff; });
+  garbageLow.forEach((el) => { if (el) el.textContent = lang.garbageSprintLow; });
+  garbageMid.forEach((el) => { if (el) el.textContent = lang.garbageSprintMid; });
+  garbageHigh.forEach((el) => { if (el) el.textContent = lang.garbageSprintHigh; });
+
+  const byIdText = {
+    mobileModeSheetTitle: lang.modeSheetTitle,
+    mobileHandlingSheetTitle: lang.handlingTitle,
+    desktopKeybindSheetTitle: lang.keySettingsTitle,
+    desktopKeybindGuide: lang.keySettingsGuide,
+    settingsTitle: lang.settingsTitle,
+    settingsGuide: lang.settingsGuide,
+    settingsMuted: lang.settingsMuted,
+    playStatsHead: lang.session,
+    ppsLabel: lang.pps,
+    maxComboLabel: lang.maxCombo,
+    timeLabel: lang.time,
+    piecesLabel: lang.pieces,
+    attackStatLabel: lang.attack,
+    mobileExitText: lang.exit,
+    mobileRestartText: lang.restartShort,
+    keysTitle: lang.keySettingsTitleFull,
+    keysGuide: lang.keySettingsGuide,
+    contactTitle: lang.contactTitle,
+    contactDesc: lang.contactDesc,
+  };
+  Object.entries(byIdText).forEach(([id, value]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  });
+
+  setLeadingLabelText(document.getElementById('languageLabel'), lang.languageLabel);
+  setLeadingLabelText(document.getElementById('mobileModeLabel'), lang.playModeLabel);
+  setLeadingLabelText(document.getElementById('mobileSubModeLabel'), lang.gravityModeLabel);
+  setLeadingLabelText(document.getElementById('mobileGarbageSprintLabel'), lang.garbageSprintLabel);
+  setLeadingLabelText(document.getElementById('mobileGravityLabel'), lang.fixedGravityLabel);
+  setLeadingLabelText(document.getElementById('mobileVolumeLabel'), lang.volumeLabel);
+  setLeadingLabelText(document.getElementById('desktopModeLabel'), lang.playModeLabel);
+  setLeadingLabelText(document.getElementById('desktopSubModeLabel'), lang.gravityModeLabel);
+  setLeadingLabelText(document.getElementById('desktopGarbageSprintLabel'), lang.garbageSprintLabel);
+  setLeadingLabelText(document.getElementById('desktopGravityLabel'), lang.fixedGravityLabel);
+  setLeadingLabelText(document.getElementById('desktopVolumeLabel'), lang.volumeLabel);
+
+  if (els.mobileModeClassicBtn) els.mobileModeClassicBtn.textContent = lang.modeClassic;
+  if (els.mobileMode4WideBtn) els.mobileMode4WideBtn.textContent = lang.mode4Wide;
+  if (els.restartBtn) els.restartBtn.textContent = lang.restartWithKey;
+  if (els.settingsToggleBtn) els.settingsToggleBtn.textContent = lang.open;
+
+  const touchLabels = {
+    moveLeft: lang.touchLeft,
+    moveRight: lang.touchRight,
+    rotateCCW: lang.touchCCW,
+    rotateCW: lang.touchCW,
+    rotate180: lang.touchTurn,
+    softDrop: lang.touchSoft,
+    hardDrop: lang.touchHard,
+    hold: lang.touchHold,
+  };
+  Object.entries(touchLabels).forEach(([action, value]) => {
+    const el = document.querySelector(`.touch-btn[data-action="${action}"] .label`);
+    if (el) el.textContent = value;
+  });
+
+  if (els.mobileModeMenuBtn) els.mobileModeMenuBtn.setAttribute('aria-label', lang.modeMenuAria);
+  if (els.mobileHandlingMenuBtn) els.mobileHandlingMenuBtn.setAttribute('aria-label', lang.handlingMenuAria);
+  if (els.mobileModeSwitch) els.mobileModeSwitch.setAttribute('aria-label', lang.modeSwitchAria);
+  if (els.mobileModeSheet) els.mobileModeSheet.setAttribute('aria-label', lang.modeSheetAria);
+  if (els.mobileHandlingSheet) els.mobileHandlingSheet.setAttribute('aria-label', lang.handlingSheetAria);
+  const systemRow = document.querySelector('.mobile-system-row');
+  if (systemRow) systemRow.setAttribute('aria-label', lang.mobileSystemAria);
+  if (els.touchControls) els.touchControls.setAttribute('aria-label', lang.touchControlsAria);
+  const contact = document.querySelector('.site-contact');
+  if (contact) contact.setAttribute('aria-label', lang.contactAria);
+  const canvasEl = document.getElementById('gameCanvas');
+  if (canvasEl) canvasEl.setAttribute('aria-label', lang.boardAria);
+  const botCanvasEl = document.getElementById('botCanvas');
+  if (botCanvasEl) botCanvasEl.setAttribute('aria-label', lang.botAria);
+
+  if (game) {
+    game.locale = currentLocale;
+    game.uiText = lang;
+  }
+  renderKeybindEditor();
+  updateMobileStartButton();
+  updateModeUi(settings.mode || '4wide', settings.subMode || 'off');
 }
 
 // ===== init =====
@@ -396,6 +914,9 @@ renderer = new Renderer(canvas);
 
 const botRenderer = null;
 game.applySettings(settings);
+game.locale = currentLocale;
+game.uiText = I18N[currentLocale] || I18N.ko;
+applyTranslations();
 
 // ===== viewport scale =====
 const viewport = document.getElementById("viewport");
@@ -481,19 +1002,6 @@ if (document.fonts && document.fonts.ready) {
 }
 
 // ===== keybind editor =====
-const ACTIONS = [
-  ["moveLeft", "왼쪽 이동"],
-  ["moveRight", "오른쪽 이동"],
-  ["softDrop", "소프트 드랍"],
-  ["hardDrop", "하드 드랍"],
-  ["rotateCW", "회전(CW)"],
-  ["rotateCCW", "회전(CCW)"],
-  ["rotate180", "회전(180)"],
-  ["hold", "홀드"],
-  ["restart", "재시작"],
-  ["exit", "타이틀/종료(ESC)"],
-];
-
 
 function initTouchControls() {
   const root = els.touchControls;
@@ -561,7 +1069,8 @@ function renderKeybindEditor() {
   if (!box) return;
   box.innerHTML = "";
 
-  for (const [action, label] of ACTIONS) {
+  for (const action of ACTIONS) {
+    const label = getActionLabel(action);
     const row = document.createElement("div");
     row.className = "keybind-row";
 
@@ -579,7 +1088,7 @@ function renderKeybindEditor() {
 
     const btn = document.createElement("button");
     btn.className = "keybind-change-btn";
-    btn.textContent = "변경";
+    btn.textContent = t("change");
     btn.addEventListener("click", () => beginRebind(action, label));
 
     row.appendChild(left);
@@ -688,6 +1197,16 @@ if (els.mobileMode4WideBtn) {
   });
 }
 
+if (els.languageSelect) {
+  els.languageSelect.addEventListener("change", () => {
+    const nextLocale = els.languageSelect.value;
+    if (!I18N[nextLocale]) return;
+    currentLocale = nextLocale;
+    saveLocale(currentLocale);
+    applyTranslations();
+  });
+}
+
 window.addEventListener("pointerdown", (e) => {
   if (!hasQuickTopbarUi()) return;
   const target = e.target;
@@ -702,6 +1221,7 @@ applyMobileSettingsUi();
 function applySettingsLive(next) {
   // PLAYING 중 안전하게 즉시 반영 가능한 항목만
   game.settings.subMode = next.subMode;
+  game.settings.garbageSprint = next.garbageSprint;
   game.settings.gravityFixedG = next.gravityFixedG;
 
   // handling
@@ -762,10 +1282,10 @@ function onModeChanged(source = (isMobileUi() ? "mobile" : "desktop")) {
 }
 
 // 모드 관련 change
-[els.mode, els.subMode, els.gravityFixedInput].forEach((x) =>
-  x.addEventListener("change", () => onModeChanged("desktop"))
+[els.mode, els.subMode, els.garbageSprint, els.gravityFixedInput].forEach((x) =>
+  x?.addEventListener("change", () => onModeChanged("desktop"))
 );
-[els.mobileMode, els.mobileSubMode, els.mobileGravityFixedInput].forEach((x) =>
+[els.mobileMode, els.mobileSubMode, els.mobileGarbageSprint, els.mobileGravityFixedInput].forEach((x) =>
   x?.addEventListener("change", () => onModeChanged("mobile"))
 );
 

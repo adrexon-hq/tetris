@@ -1,4 +1,4 @@
-import { COLORS, PIECE_CELLS } from "./constants.js?v=0.3.88";
+import { COLORS, PIECE_CELLS } from "./constants.js?v=0.3.92";
 
 export class Renderer {
   constructor(canvas) {
@@ -19,6 +19,7 @@ export class Renderer {
     this.clear();
     const ctx = this.ctx;
     const { board } = game;
+    const ui = (key, fallback) => (game?.uiText?.[key] ?? fallback);
 
     const margin = 20;
     const sideW = 120;
@@ -144,8 +145,8 @@ export class Renderer {
     }
 
     // side boxes
-    this.drawMiniPanel(game, boardX - sideW - 12, boardY, sideW, cell, "HOLD", game.holdType ? [game.holdType] : []);
-    this.drawMiniPanel(game, boardX + boardPxW + 12, boardY, sideW, cell, "NEXT", game.randomizer.peek(game.settings.previewCount));
+    this.drawMiniPanel(game, boardX - sideW - 12, boardY, sideW, cell, ui("hold", "HOLD"), game.holdType ? [game.holdType] : [], false, "hold");
+    this.drawMiniPanel(game, boardX + boardPxW + 12, boardY, sideW, cell, ui("next", "NEXT"), game.randomizer.peek(game.settings.previewCount), false, "next");
 
 
     
@@ -187,9 +188,10 @@ export class Renderer {
 
           ctx.font = "800 18px Pretendard, sans-serif";
           ctx.lineWidth = 6;
-          ctx.strokeText("COMBO", 0, 52);
+          const comboLabel = ui("combo", "COMBO");
+          ctx.strokeText(comboLabel, 0, 52);
           ctx.fillStyle = "rgba(160, 190, 255, 0.95)";
-          ctx.fillText("COMBO", 0, 52);
+          ctx.fillText(comboLabel, 0, 52);
         }
 
 
@@ -197,7 +199,7 @@ export class Renderer {
         if (game.popup.kind === "attack" || game.popup.kind === "attackTotal") {
           const text = String(game.popup.value);
 
-          const label = (game.popup.kind === "attackTotal") ? "TOTAL" : "ATTACK";
+          const label = (game.popup.kind === "attackTotal") ? ui("total", "TOTAL") : ui("attack", "ATTACK");
 
           ctx.font = "900 66px Pretendard, sans-serif";
           ctx.lineWidth = 10;
@@ -214,7 +216,7 @@ export class Renderer {
         }
 
         if (game.popup.kind === "allclear") {
-          const text = game.popup.text || "올클리어";
+          const text = ui("allClearShort", game.popup.text || "올클리어");
 
           ctx.font = "900 54px Pretendard, sans-serif";
           ctx.lineWidth = 10;
@@ -225,9 +227,10 @@ export class Renderer {
 
           ctx.font = "800 18px Pretendard, sans-serif";
           ctx.lineWidth = 6;
-          ctx.strokeText("ALL CLEAR", 0, 54);
+          const allClearLabel = ui("allClear", "ALL CLEAR");
+          ctx.strokeText(allClearLabel, 0, 54);
           ctx.fillStyle = "rgba(255, 230, 150, 0.95)";
-          ctx.fillText("ALL CLEAR", 0, 54);
+          ctx.fillText(allClearLabel, 0, 54);
         }
 
         ctx.restore();
@@ -245,23 +248,23 @@ export class Renderer {
       ctx.textBaseline = "middle";
       ctx.fillStyle = "#e6ecff";
       ctx.font = "900 64px Pretendard, sans-serif";
-      ctx.fillText("VICTORY", this.canvas.width / 2, this.canvas.height / 2 - 10);
+      ctx.fillText(ui("victory", "VICTORY"), this.canvas.width / 2, this.canvas.height / 2 - 10);
 
       ctx.font = "700 18px Pretendard, sans-serif";
       ctx.fillStyle = "rgba(160, 190, 255, 0.95)";
-      ctx.fillText("R 키로 재시작", this.canvas.width / 2, this.canvas.height / 2 + 52);
+      ctx.fillText(ui("victoryHint", "R 키로 재시작"), this.canvas.width / 2, this.canvas.height / 2 + 52);
       ctx.restore();
     }
 
 // status text inside canvas
     if (game.state === "TITLE") {
       const desktopQuickUi = document.body.classList.contains("desktop-quick-ui");
-      this.drawCenterText(desktopQuickUi ? "보드를 클릭하거나 Enter로 시작" : "게임 시작 버튼을 누르세요", 22);
+      this.drawCenterText(desktopQuickUi ? ui("clickBoardOrEnter", "보드를 클릭하거나 Enter로 시작") : ui("pressStartButton", "게임 시작 버튼을 누르세요"), 22);
     }
 
     if (game.state === "GAME_OVER") {
-      this.drawCenterText("GAME OVER", 30);
-      this.drawCenterText("R: 재시작 / Esc: 타이틀", 18, 38);
+      this.drawCenterText(ui("gameOver", "GAME OVER"), 30);
+      this.drawCenterText(ui("gameOverHint", "R: 재시작 / Esc: 타이틀"), 18, 38);
     }
   }
 
@@ -290,8 +293,8 @@ export class Renderer {
 
     // side mini panels
     const fakeGame = { board };
-    this.drawMiniPanel(fakeGame, boardX - sideGap - sideW, boardY, sideW, cell, "HOLD", bot.holdType ? [bot.holdType] : [], true);
-    this.drawMiniPanel(fakeGame, boardX + boardPxW + sideGap, boardY, sideW, cell, "NEXT", bot.randomizer.peek(5), true);
+    this.drawMiniPanel(fakeGame, boardX - sideGap - sideW, boardY, sideW, cell, "HOLD", bot.holdType ? [bot.holdType] : [], true, "hold");
+    this.drawMiniPanel(fakeGame, boardX + boardPxW + sideGap, boardY, sideW, cell, "NEXT", bot.randomizer.peek(5), true, "next");
 
     // border / background
     ctx.fillStyle = "#0d1420";
@@ -372,7 +375,7 @@ export class Renderer {
     }
   }
 
-  drawMiniPanel(game, x, y, w, cell, title, types, compact = false) {
+  drawMiniPanel(game, x, y, w, cell, title, types, compact = false, panelKind = "next") {
     const ctx = this.ctx;
     const panelH = game.board.visibleH * cell;
 
@@ -395,7 +398,7 @@ export class Renderer {
     const previewCell = Math.max(8, Math.min(previewCellBase, Math.floor((w - 20) / 4)));
     let offsetY = y + (compact ? 26 : 30);
 
-    const renderCount = title === "HOLD" ? Math.min(1, types.length) : types.length;
+    const renderCount = panelKind === "hold" ? Math.min(1, types.length) : types.length;
     for (let i = 0; i < renderCount; i++) {
       const t = types[i];
       if (!t) continue;

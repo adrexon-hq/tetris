@@ -1,6 +1,6 @@
-import { DEFAULT_SETTINGS, getKickData, getKickData180 } from "./constants.js?v=0.3.88";
-import { Board } from "./board.js?v=0.3.88";
-import { BagRandomizer } from "./randomizer.js?v=0.3.88";
+import { DEFAULT_SETTINGS, getKickData, getKickData180 } from "./constants.js?v=0.3.92";
+import { Board } from "./board.js?v=0.3.92";
+import { BagRandomizer } from "./randomizer.js?v=0.3.92";
 
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));
@@ -89,6 +89,9 @@ export class TetrisGame {
     this.mobileFreeLockTimerMs = 0;
     this.mobileActionThisFrame = false;
 
+    this.garbageSprintTimerMs = 0;
+    this.garbageSprintHoleX = -1;
+
     this.moveRepeat = {
       active: false,
       dir: null,
@@ -137,6 +140,10 @@ export class TetrisGame {
     // normalize audio fields
     this.settings.soundEnabled = this.settings.soundEnabled !== false;
     this.settings.volume = Math.max(0, Math.min(100, Number(this.settings.volume ?? 35)));
+
+    if (!["off", "low", "mid", "high"].includes(this.settings.garbageSprint)) {
+      this.settings.garbageSprint = "off";
+    }
     // 봇전은 일단 제거
     this.bot = null;
     this.incoming = [];
@@ -164,6 +171,7 @@ export class TetrisGame {
     this.holdUsed = false;
 
     this.state = "PLAYING";
+    this.resetGarbageSprintTimer();
 
     if (this.bot) {
       if (this.bot.setSeed) this.bot.setSeed(this.matchSeed);
@@ -202,6 +210,8 @@ export class TetrisGame {
     this.maxCombo = 0;
     this.mobileFreeLockTimerMs = 0;
     this.mobileActionThisFrame = false;
+    this.garbageSprintTimerMs = 0;
+    this.garbageSprintHoleX = -1;
 
     this.popup = null;
 
@@ -211,6 +221,67 @@ export class TetrisGame {
     if (this.bot) {
       this.bot.reset();
     }
+  }
+
+  getGarbageSprintDelayMs() {
+    switch (this.settings.garbageSprint) {
+      case "low":
+        return 5000;
+      case "mid":
+        return 2000 + Math.floor(Math.random() * 1001);
+      case "high":
+        return 2000;
+      default:
+        return Infinity;
+    }
+  }
+
+  getGarbageSprintBurstLines() {
+    return this.settings.garbageSprint === "high" ? 3 : 1;
+  }
+
+  resetGarbageSprintTimer() {
+    this.garbageSprintTimerMs = this.getGarbageSprintDelayMs();
+  }
+
+  nextGarbageSprintHole() {
+    const w = this.board?.w ?? 10;
+    if (w <= 1) return 0;
+    let nx = Math.floor(Math.random() * w);
+    if (this.garbageSprintHoleX >= 0 && nx === this.garbageSprintHoleX) {
+      nx = (nx + 1 + Math.floor(Math.random() * (w - 1))) % w;
+    }
+    this.garbageSprintHoleX = nx;
+    return nx;
+  }
+
+  applyGarbageSprintLine(lineCount = null) {
+    if (!this.board || this.state !== "PLAYING") return;
+
+    const burstLines = Math.max(1, Number.isFinite(lineCount) ? Math.floor(lineCount) : this.getGarbageSprintBurstLines());
+    const holes = Array.from({ length: burstLines }, () => this.nextGarbageSprintHole());
+    const overflow = this.board.addGarbageHoles(holes);
+
+    if (this.currentPiece) {
+      let safety = 0;
+      while (this.board.collides(this.currentPiece) && safety < this.board.h + 4) {
+        this.currentPiece = { ...this.currentPiece, y: this.currentPiece.y - 1 };
+        safety += 1;
+      }
+      if (this.board.collides(this.currentPiece)) {
+        this.state = "GAME_OVER";
+        return;
+      }
+    }
+
+    if (overflow) {
+      this.state = "GAME_OVER";
+      return;
+    }
+
+    this.lockTimerMs = 0;
+    this.mobileFreeLockTimerMs = 0;
+    this.dropAccumulator = 0;
   }
 
   spawnNext(typeOverride = null) {
@@ -342,6 +413,10 @@ export class TetrisGame {
 
     const lockOut = this.board.isLockOut(piece);
     const cleared = this.board.clearLines();
+
+    if (cleared > 0 && this.settings.garbageSprint !== "off") {
+      this.resetGarbageSprintTimer();
+    }
 
     // 올클리어(All Clear): 라인 삭제 후 보드가 완전히 비었는지 체크
     const allClear = cleared > 0 && this.board.grid.every((row) => row.every((c) => c === null));
@@ -711,6 +786,15 @@ export class TetrisGame {
 
     // ✅ PLAYING에서만 시간이 흐른다
     this.playTimeSec += dtMs / 1000;
+
+    if (this.settings.garbageSprint !== "off") {
+      this.garbageSprintTimerMs -= dtMs;
+      while (this.garbageSprintTimerMs <= 0 && this.state === "PLAYING") {
+        this.applyGarbageSprintLine(this.getGarbageSprintBurstLines());
+        if (this.state !== "PLAYING") return;
+        this.resetGarbageSprintTimer();
+      }
+    }
 
     this.mobileActionThisFrame = false;
     this.handleOneShotInputs(now);

@@ -1,4 +1,4 @@
-import { PIECE_TYPES } from "./constants.js?v=0.3.88";
+import { PIECE_TYPES } from "./constants.js?v=0.3.92";
 
 export function mulberry32(seed) {
   let t = seed >>> 0;

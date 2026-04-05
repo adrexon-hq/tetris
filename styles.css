@@ -2250,7 +2250,7 @@ body.desktop-quick-ui .site-contact {
   body.mobile-ui .touch-btn .label { font-size: 0.42rem; }
 }
 
-/* ===== Mobile fixed-ratio lock (0.3.88) ===== */
+/* ===== Mobile fixed-ratio lock (0.3.92) ===== */
 @media (max-width: 1100px), (pointer: coarse) {
   body.mobile-ui {
     --mobile-design-w: 390px;
