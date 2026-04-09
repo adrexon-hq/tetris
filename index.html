@@ -260,6 +260,10 @@
                 <div id="attackStatLabel" class="play-stat-label">ATTACK</div>
                 <div id="attackTotalStatText" class="play-stat-value">0</div>
               </div>
+              <div class="play-stats-ad" aria-label="광고">
+                <div class="play-stats-ad-badge">AD</div>
+                <div id="desktopAdsterraBanner" class="play-stats-ad-slot"></div>
+              </div>
             </aside>
           </div>
 
@@ -357,6 +361,28 @@
       </a>
     </div>
     <script type="module" src="./src/main.js?v=0.3.92"></script>
+    <script>
+      (function () {
+        const isMobile = window.matchMedia("(max-width: 1100px), (pointer: coarse)").matches;
+        if (isMobile) return;
+
+        const slot = document.getElementById("desktopAdsterraBanner");
+        if (!slot) return;
+
+        window.atOptions = {
+          key: "3ce46abdaf02b566e6deb18492fd0d2a",
+          format: "iframe",
+          height: 300,
+          width: 160,
+          params: {}
+        };
+
+        const s = document.createElement("script");
+        s.src = "https://www.highperformanceformat.com/3ce46abdaf02b566e6deb18492fd0d2a/invoke.js";
+        s.async = true;
+        slot.appendChild(s);
+      })();
+    </script>
 </body>
 
 </html>
