@@ -1,13 +1,25 @@
 <!doctype html>
 <html lang="ko">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>bailis</title>
   <meta name="description" content="bailis는 4Wide 연습을 위한 브라우저 게임입니다." />
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-BTS82DZ072"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+
+    gtag('config', 'G-BTS82DZ072');
+  </script>
   <link rel="stylesheet" href="./styles.css" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%2310171a'/><path d='M18 20h28v6H18zM18 30h18v6H18zM18 40h10v6H18z' fill='%236ea8fe'/></svg>" />
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%2310171a'/><path d='M18 20h28v6H18zM18 30h18v6H18zM18 40h10v6H18z' fill='%236ea8fe'/></svg>" />
 </head>
+
 <body>
   <!--
     화면 비율 고정(PC):
@@ -19,12 +31,15 @@
     <div id="viewport" class="viewport" data-design-w="1480" data-design-h="920">
       <main class="app">
         <div class="mobile-topbar" aria-label="모바일 빠른 설정">
-          <button id="mobileModeMenuBtn" class="mobile-topbar-btn mobile-icon-btn" type="button" aria-label="모드 메뉴 열기">☰</button>
+          <button id="mobileModeMenuBtn" class="mobile-topbar-btn mobile-icon-btn" type="button"
+            aria-label="모드 메뉴 열기">☰</button>
           <div id="mobileModeSwitch" class="mobile-mode-switch" aria-label="플레이 모드 선택">
-            <button id="mobileModeClassicBtn" class="mobile-mode-chip" type="button" data-mode="classic">Classic</button>
+            <button id="mobileModeClassicBtn" class="mobile-mode-chip" type="button"
+              data-mode="classic">Classic</button>
             <button id="mobileMode4WideBtn" class="mobile-mode-chip" type="button" data-mode="4wide">4Wide</button>
           </div>
-          <button id="mobileHandlingMenuBtn" class="mobile-topbar-btn mobile-icon-btn" type="button" aria-label="핸들링 메뉴 열기">⚙</button>
+          <button id="mobileHandlingMenuBtn" class="mobile-topbar-btn mobile-icon-btn" type="button"
+            aria-label="핸들링 메뉴 열기">⚙</button>
         </div>
 
         <div id="mobileModeSheet" class="mobile-sheet mobile-mode-sheet" aria-label="모바일 모드 설정">
@@ -111,7 +126,8 @@
             <div id="desktopKeybindSheetSection" class="desktop-keybind-sheet-section">
               <div class="desktop-sheet-divider"></div>
               <div id="desktopKeybindSheetTitle" class="mobile-sheet-title keybind-sheet-title">키 설정</div>
-              <p id="desktopKeybindGuide" class="card-guide key-guide desktop-keybind-guide">변경 버튼을 누른 뒤 원하는 키를 입력하세요. ESC는 취소되고, 중복 키는 자동으로 교환됩니다.</p>
+              <p id="desktopKeybindGuide" class="card-guide key-guide desktop-keybind-guide">변경 버튼을 누른 뒤 원하는 키를 입력하세요.
+                ESC는 취소되고, 중복 키는 자동으로 교환됩니다.</p>
               <div id="desktopKeybindSheetHost"></div>
             </div>
           </div>
@@ -164,7 +180,7 @@
               </select>
             </div>
 
-<div class="handling">
+            <div class="handling">
               <h2 class="handling-title">HANDLING</h2>
 
               <div class="handling-row">
@@ -198,8 +214,8 @@
                   <div class="handling-meta"><span id="sdfText">20</span><span class="sdfX">x</span></div>
                 </div>
               </div>
-</div>
-<label id="desktopVolumeLabel">볼륨
+            </div>
+            <label id="desktopVolumeLabel">볼륨
               <input id="volumeInput" type="range" min="0" max="100" value="35" />
             </label>
 
@@ -213,7 +229,7 @@
             </p>
           </div>
 
-</section>
+        </section>
 
         <section class="board-wrap">
           <div class="board-stage">
@@ -310,7 +326,7 @@
         </div>
 
         <section class="panel right">
-<!-- ✅ 키 설정 카드 (JS가 동적으로 줄을 채움) -->
+          <!-- ✅ 키 설정 카드 (JS가 동적으로 줄을 채움) -->
           <div class="card keybind-card">
             <h2 id="keysTitle" class="keys-title">키 설정(변경 가능)</h2>
             <p id="keysGuide" class="card-guide key-guide">변경 버튼을 누른 뒤 원하는 키를 입력하세요. ESC는 취소되고, 중복 키는 자동으로 교환됩니다.</p>
@@ -322,13 +338,13 @@
             <canvas id="botCanvas" width="296" height="460" aria-label="bot board"></canvas>
           </div>
 
-</section>
+        </section>
       </main>
     </div>
 
     <!-- 키 변경 중 안내 오버레이 -->
     <div id="overlay" class="overlay hidden"></div>
-  
+
     <div class="site-contact" aria-label="문의 메일">
       <a class="contact-link" href="mailto:adrexonhq@gmail.com?subject=Web%20Tetris%20문의" title="문의 메일 보내기">
         <span class="contact-icon" aria-hidden="true">✉</span>
@@ -339,6 +355,7 @@
         <span class="contact-email">adrexonhq@gmail.com</span>
       </a>
     </div>
-<script type="module" src="./src/main.js?v=0.3.92"></script>
+    <script type="module" src="./src/main.js?v=0.3.92"></script>
 </body>
+
 </html>
