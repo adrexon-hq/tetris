@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>bailis</title>
+  <meta name="description" content="bailis는 4Wide 연습을 위한 브라우저 게임입니다." />
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='12' fill='%2310171a'/><path d='M18 20h28v6H18zM18 30h18v6H18zM18 40h10v6H18z' fill='%236ea8fe'/></svg>" />
+</head>
+<body>
+  <!--
+    화면 비율 고정(PC):
+    - '디자인 기준 크기'를 viewport에 넣고,
+    - 브라우저 크기에 맞춰 통째로 scale 합니다.
+    - 작은 화면에서도 3열 레이아웃이 무너지지 않고 '그대로 축소'됩니다.
+  -->
+  <div id="stage" class="stage">
+    <div id="viewport" class="viewport" data-design-w="1480" data-design-h="920">
+      <main class="app">
+        <div class="mobile-topbar" aria-label="모바일 빠른 설정">
+          <button id="mobileModeMenuBtn" class="mobile-topbar-btn mobile-icon-btn" type="button" aria-label="모드 메뉴 열기">☰</button>
+          <div id="mobileModeSwitch" class="mobile-mode-switch" aria-label="플레이 모드 선택">
+            <button id="mobileModeClassicBtn" class="mobile-mode-chip" type="button" data-mode="classic">Classic</button>
+            <button id="mobileMode4WideBtn" class="mobile-mode-chip" type="button" data-mode="4wide">4Wide</button>
+          </div>
+          <button id="mobileHandlingMenuBtn" class="mobile-topbar-btn mobile-icon-btn" type="button" aria-label="핸들링 메뉴 열기">⚙</button>
+        </div>
+
+        <div id="mobileModeSheet" class="mobile-sheet mobile-mode-sheet" aria-label="모바일 모드 설정">
+          <div class="mobile-sheet-card">
+            <div id="mobileModeSheetTitle" class="mobile-sheet-title">모드</div>
+            <label id="languageLabel">언어
+              <select id="languageSelect">
+                <option value="ko">🇰🇷 한국어</option>
+                <option value="en">🇺🇸 English</option>
+                <option value="ja">🇯🇵 日本語</option>
+                <option value="zh">🇨🇳 简体中文</option>
+              </select>
+            </label>
+            <label id="mobileModeLabel">플레이 모드
+              <select id="mobileModeSelect">
+                <option value="classic">Classic (10x20)</option>
+                <option value="4wide">4Wide</option>
+              </select>
+            </label>
+            <label id="mobileSubModeLabel">모드
+              <select id="mobileSubModeSelect">
+                <option value="off">프리 모드</option>
+                <option value="fixed">고정 중력</option>
+                <option value="accel">가속 중력</option>
+              </select>
+            </label>
+            <label id="mobileGarbageSprintLabel">가비지 스프린트
+              <select id="mobileGarbageSprintSelect">
+                <option value="off">끔</option>
+                <option value="low">하 (5초)</option>
+                <option value="mid">중 (2~3초)</option>
+                <option value="high">상 (2초 / 3줄)</option>
+              </select>
+            </label>
+            <div class="gravity-fixed-only">
+              <label id="mobileGravityLabel">고정 중력 (0.01 ~ 100)
+                <input id="mobileGravityFixedInput" type="number" min="0.01" max="100" step="0.01" value="0.02" />
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div id="mobileHandlingSheet" class="mobile-sheet mobile-handling-sheet" aria-label="모바일 핸들링 설정">
+          <div class="mobile-sheet-card">
+            <div id="mobileHandlingSheetTitle" class="mobile-sheet-title">HANDLING</div>
+            <div class="handling handling-mobile">
+              <div class="handling-row">
+                <div class="handling-left">
+                  <div class="handling-name">ARR</div>
+                  <input id="mobileArrSlider" type="range" min="0" max="10" step="0.1" value="2" />
+                </div>
+                <div class="handling-right">
+                  <div class="handling-meta"><span id="mobileArrMsText">33</span>MS</div>
+                  <div class="handling-meta"><span id="mobileArrFText">2</span>F</div>
+                </div>
+              </div>
+
+              <div class="handling-row">
+                <div class="handling-left">
+                  <div class="handling-name">DAS</div>
+                  <input id="mobileDasSlider" type="range" min="0" max="20" step="0.05" value="7.6" />
+                </div>
+                <div class="handling-right">
+                  <div class="handling-meta"><span id="mobileDasMsText">127</span>MS</div>
+                  <div class="handling-meta"><span id="mobileDasFText">7.6</span>F</div>
+                </div>
+              </div>
+
+              <div class="handling-row">
+                <div class="handling-left">
+                  <div class="handling-name">SDF</div>
+                  <input id="mobileSdfSlider" type="range" min="1" max="41" step="0.5" value="20" />
+                </div>
+                <div class="handling-right">
+                  <div class="handling-meta"><span id="mobileSdfText">20</span><span class="sdfX">x</span></div>
+                </div>
+              </div>
+            </div>
+
+            <label id="mobileVolumeLabel">볼륨
+              <input id="mobileVolumeInput" type="range" min="0" max="100" value="35" />
+            </label>
+
+            <div id="desktopKeybindSheetSection" class="desktop-keybind-sheet-section">
+              <div class="desktop-sheet-divider"></div>
+              <div id="desktopKeybindSheetTitle" class="mobile-sheet-title keybind-sheet-title">키 설정</div>
+              <p id="desktopKeybindGuide" class="card-guide key-guide desktop-keybind-guide">변경 버튼을 누른 뒤 원하는 키를 입력하세요. ESC는 취소되고, 중복 키는 자동으로 교환됩니다.</p>
+              <div id="desktopKeybindSheetHost"></div>
+            </div>
+          </div>
+        </div>
+
+        <section class="panel left">
+          <div class="card settings-card">
+            <div class="settings-head">
+              <h2 id="settingsTitle">게임 설정</h2>
+              <button id="settingsToggleBtn" class="settings-toggle" type="button" aria-expanded="false">열기</button>
+            </div>
+            <p id="settingsGuide" class="card-guide">게임 시작 전에 모드와 핸들링을 먼저 맞춰주세요.</p>
+
+            <label id="desktopModeLabel" class="mode-label">플레이 모드
+              <select id="modeSelect">
+                <option value="classic">Classic (10x20)</option>
+                <option value="4wide">4Wide</option>
+              </select>
+            </label>
+
+            <label id="desktopSubModeLabel">모드
+              <select id="subModeSelect">
+                <option value="off">프리 모드</option>
+                <option value="fixed">고정 중력</option>
+                <option value="accel">가속 중력</option>
+              </select>
+            </label>
+
+            <label id="desktopGarbageSprintLabel">가비지 스프린트
+              <select id="garbageSprintSelect">
+                <option value="off">끔</option>
+                <option value="low">하 (5초)</option>
+                <option value="mid">중 (2~3초)</option>
+                <option value="high">상 (2초 / 3줄)</option>
+              </select>
+            </label>
+
+            <div class="gravity-fixed-only">
+              <label id="desktopGravityLabel">고정 중력 (0.01 ~ 100)
+                <input id="gravityFixedInput" type="number" min="0.01" max="100" step="0.01" value="0.02" />
+              </label>
+            </div>
+
+            <div class="hidden">
+              <select id="playModeSelect">
+                <option value="solo" selected>혼자(연습)</option>
+              </select>
+              <select id="botDiffSelect">
+                <option value="easy" selected>초</option>
+              </select>
+            </div>
+
+<div class="handling">
+              <h2 class="handling-title">HANDLING</h2>
+
+              <div class="handling-row">
+                <div class="handling-left">
+                  <div class="handling-name">ARR</div>
+                  <input id="arrSlider" type="range" min="0" max="10" step="0.1" value="2" />
+                </div>
+                <div class="handling-right">
+                  <div class="handling-meta"><span id="arrMsText">33</span>MS</div>
+                  <div class="handling-meta"><span id="arrFText">2</span>F</div>
+                </div>
+              </div>
+
+              <div class="handling-row">
+                <div class="handling-left">
+                  <div class="handling-name">DAS</div>
+                  <input id="dasSlider" type="range" min="0" max="20" step="0.05" value="7.6" />
+                </div>
+                <div class="handling-right">
+                  <div class="handling-meta"><span id="dasMsText">127</span>MS</div>
+                  <div class="handling-meta"><span id="dasFText">7.6</span>F</div>
+                </div>
+              </div>
+
+              <div class="handling-row">
+                <div class="handling-left">
+                  <div class="handling-name">SDF</div>
+                  <input id="sdfSlider" type="range" min="1" max="41" step="0.5" value="20" />
+                </div>
+                <div class="handling-right">
+                  <div class="handling-meta"><span id="sdfText">20</span><span class="sdfX">x</span></div>
+                </div>
+              </div>
+</div>
+<label id="desktopVolumeLabel">볼륨
+              <input id="volumeInput" type="range" min="0" max="100" value="35" />
+            </label>
+
+            <div class="actions">
+              <button id="startBtn">게임 시작</button>
+              <button id="restartBtn">재시작 (R)</button>
+            </div>
+
+            <p id="settingsMuted" class="muted">
+              Lock Delay, Preview는 기본값으로 고정되어 있습니다.
+            </p>
+          </div>
+
+</section>
+
+        <section class="board-wrap">
+          <div class="board-stage">
+            <div class="board-shell">
+              <canvas id="gameCanvas" width="560" height="840" aria-label="tetris board"></canvas>
+            </div>
+
+            <aside class="play-stats" aria-label="세션 통계">
+              <div id="playStatsHead" class="play-stats-head">SESSION</div>
+              <div class="play-stat-item">
+                <div id="ppsLabel" class="play-stat-label">PPS</div>
+                <div id="ppsText" class="play-stat-value">0.00</div>
+              </div>
+              <div class="play-stat-item">
+                <div id="maxComboLabel" class="play-stat-label">MAX COMBO</div>
+                <div id="maxComboText" class="play-stat-value">0</div>
+              </div>
+              <div class="play-stat-item">
+                <div id="timeLabel" class="play-stat-label">TIME</div>
+                <div id="timeText" class="play-stat-value">00:00</div>
+              </div>
+              <div class="play-stat-item">
+                <div id="piecesLabel" class="play-stat-label">PIECES</div>
+                <div id="piecesText" class="play-stat-value">0</div>
+              </div>
+              <div class="play-stat-item">
+                <div id="attackStatLabel" class="play-stat-label">ATTACK</div>
+                <div id="attackTotalStatText" class="play-stat-value">0</div>
+              </div>
+            </aside>
+          </div>
+
+          <div class="mobile-system-row" aria-label="모바일 시스템 버튼">
+            <button id="mobileExitBtn" class="mobile-system-btn mobile-system-side" type="button">
+              <span class="icon">⤺</span>
+              <span id="mobileExitText" class="text">EXIT</span>
+            </button>
+            <button id="mobileStartBtn" class="mobile-bottom-start" type="button">
+              <span class="icon">▶</span>
+              <span id="mobileStartText" class="text">게임 시작</span>
+            </button>
+            <button id="mobileRestartBtn" class="mobile-system-btn mobile-system-side" type="button">
+              <span class="icon">↻</span>
+              <span id="mobileRestartText" class="text">RESTART</span>
+            </button>
+          </div>
+        </section>
+
+        <div id="touchControls" class="touch-controls" aria-label="mobile controls">
+          <div class="touch-group touch-left">
+            <div class="touch-row move-row">
+              <button class="touch-btn move-btn" data-action="moveLeft" data-mode="hold" type="button">
+                <span class="emoji">←</span>
+                <span class="label">LEFT</span>
+              </button>
+              <button class="touch-btn move-btn" data-action="moveRight" data-mode="hold" type="button">
+                <span class="emoji">→</span>
+                <span class="label">RIGHT</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="touch-group touch-right">
+            <div class="touch-row rotate-row">
+              <button class="touch-btn rotate-btn" data-action="rotateCCW" data-mode="tap" type="button">
+                <span class="emoji">⟲</span>
+                <span class="label">CCW</span>
+              </button>
+              <button class="touch-btn rotate-btn" data-action="rotateCW" data-mode="tap" type="button">
+                <span class="emoji">⟳</span>
+                <span class="label">CW</span>
+              </button>
+              <button class="touch-btn rotate-btn spin180" data-action="rotate180" data-mode="tap" type="button">
+                <span class="emoji">180°</span>
+                <span class="label">TURN</span>
+              </button>
+            </div>
+
+            <div class="touch-row drop-row">
+              <button class="touch-btn soft" data-action="softDrop" data-mode="hold" type="button">
+                <span class="emoji">↓</span>
+                <span class="label">SOFT</span>
+              </button>
+              <button class="touch-btn hard" data-action="hardDrop" data-mode="tap" type="button">
+                <span class="emoji">⇣</span>
+                <span class="label">HARD</span>
+              </button>
+              <button class="touch-btn hold" data-action="hold" data-mode="tap" type="button">
+                <span class="emoji">H</span>
+                <span class="label">HOLD</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <section class="panel right">
+<!-- ✅ 키 설정 카드 (JS가 동적으로 줄을 채움) -->
+          <div class="card keybind-card">
+            <h2 id="keysTitle" class="keys-title">키 설정(변경 가능)</h2>
+            <p id="keysGuide" class="card-guide key-guide">변경 버튼을 누른 뒤 원하는 키를 입력하세요. ESC는 취소되고, 중복 키는 자동으로 교환됩니다.</p>
+            <div id="keybindEditor" class="keybind-editor"></div>
+          </div>
+
+          <div class="card vs-only bot-field">
+            <h2>BOT FIELD</h2>
+            <canvas id="botCanvas" width="296" height="460" aria-label="bot board"></canvas>
+          </div>
+
+</section>
+      </main>
+    </div>
+
+    <!-- 키 변경 중 안내 오버레이 -->
+    <div id="overlay" class="overlay hidden"></div>
+  
+    <div class="site-contact" aria-label="문의 메일">
+      <a class="contact-link" href="mailto:adrexonhq@gmail.com?subject=Web%20Tetris%20문의" title="문의 메일 보내기">
+        <span class="contact-icon" aria-hidden="true">✉</span>
+        <span class="contact-copy">
+          <span id="contactTitle" class="contact-title">문의하기</span>
+          <span id="contactDesc" class="contact-desc">버그 제보 / 오류 문의</span>
+        </span>
+        <span class="contact-email">adrexonhq@gmail.com</span>
+      </a>
+    </div>
+<script type="module" src="./src/main.js?v=0.3.92"></script>
+</body>
+</html>
