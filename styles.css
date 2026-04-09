@@ -2488,6 +2488,46 @@ body.desktop-quick-ui .site-contact {
   }
 }
 
+.site-ad {
+  position: fixed;
+  right: 26px;
+  bottom: 96px;
+  z-index: 1090;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  width: 172px;
+  padding: 10px 6px 6px;
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(14, 21, 33, 0.92) 0%, rgba(11, 16, 26, 0.96) 100%);
+  border: 1px solid rgba(110, 168, 254, 0.26);
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.34);
+}
+
+.site-ad-badge {
+  justify-self: start;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(110, 168, 254, 0.12);
+  border: 1px solid rgba(110, 168, 254, 0.26);
+  color: #9bbcff;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.site-ad-slot {
+  width: 160px;
+  height: 300px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: rgba(8, 12, 20, 0.55);
+}
+
+body.mobile-ui .site-ad {
+  display: none !important;
+}
+
 /* ===== Mobile fixed-ratio lock (0.3.92) ===== */
 @media (max-width: 1100px),
 (pointer: coarse) {
