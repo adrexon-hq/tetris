@@ -1,8 +1,8 @@
-import { DEFAULT_SETTINGS } from "./constants.js?v=0.3.92";
-import { InputManager } from "./input.js?v=0.3.92";
-import { TetrisGame } from "./game.js?v=0.3.92";
-import { Renderer } from "./renderer.js?v=0.3.92";
-import { AudioManager } from "./audio.js?v=0.3.92";
+import { DEFAULT_SETTINGS } from "./constants.js?v=0.3.0";
+import { InputManager } from "./input.js?v=0.3.0";
+import { TetrisGame } from "./game.js?v=0.3.0";
+import { Renderer } from "./renderer.js?v=0.3.0";
+import { AudioManager } from "./audio.js?v=0.3.0";
 
 const STORAGE_KEY = "web_tetris_settings_0.3.60";
 const LANG_STORAGE_KEY = "bailis_ui_lang_0.3.92";
@@ -383,6 +383,47 @@ function saveLocale(locale) {
   } catch {}
 }
 
+function applyLocaleChange(nextLocale) {
+  if (!I18N[nextLocale] || nextLocale === currentLocale) return;
+  currentLocale = nextLocale;
+  saveLocale(currentLocale);
+  applyTranslations();
+}
+
+const LOCALE_META = {
+  ko: { flag: "🇰🇷", label: "한국어" },
+  en: { flag: "🇺🇸", label: "English" },
+  ja: { flag: "🇯🇵", label: "日本語" },
+  zh: { flag: "🇨🇳", label: "简体中文" },
+};
+
+function syncLocaleQuickButtons() {
+  (els.localeQuickButtons || []).forEach((btn) => {
+    const active = btn.dataset.locale === currentLocale;
+    btn.classList.toggle("is-active", active);
+    btn.setAttribute("aria-pressed", active ? "true" : "false");
+  });
+}
+
+function syncLocalePicker() {
+  const meta = LOCALE_META[currentLocale] || LOCALE_META.ko;
+  if (els.localePickerFlag) els.localePickerFlag.textContent = meta.flag;
+  if (els.localePickerText) els.localePickerText.textContent = meta.label;
+
+  (els.localeMenuButtons || []).forEach((btn) => {
+    const active = btn.dataset.locale === currentLocale;
+    btn.classList.toggle("is-active", active);
+    btn.setAttribute("aria-pressed", active ? "true" : "false");
+  });
+}
+
+function setLocalePickerOpen(open) {
+  if (!els.localePicker || !els.localePickerBtn || !els.localePickerMenu) return;
+  els.localePicker.classList.toggle("is-open", open);
+  els.localePickerBtn.setAttribute("aria-expanded", open ? "true" : "false");
+  els.localePickerMenu.classList.toggle("hidden", !open);
+}
+
 function t(key, vars = null) {
   const dict = I18N[currentLocale] || I18N.ko;
   let out = dict[key] ?? I18N.ko[key] ?? key;
@@ -512,6 +553,13 @@ const els = {
   mobileModeSheet: document.getElementById("mobileModeSheet"),
   mobileHandlingSheet: document.getElementById("mobileHandlingSheet"),
   languageSelect: document.getElementById("languageSelect"),
+  localeQuickButtons: Array.from(document.querySelectorAll(".locale-chip")),
+  localePicker: document.getElementById("localePicker"),
+  localePickerBtn: document.getElementById("localePickerBtn"),
+  localePickerMenu: document.getElementById("localePickerMenu"),
+  localePickerFlag: document.getElementById("localePickerFlag"),
+  localePickerText: document.getElementById("localePickerText"),
+  localeMenuButtons: Array.from(document.querySelectorAll(".locale-menu-option")),
   mobileMode: document.getElementById("mobileModeSelect"),
   mobileSubMode: document.getElementById("mobileSubModeSelect"),
   mobileGarbageSprint: document.getElementById("mobileGarbageSprintSelect"),
@@ -794,6 +842,8 @@ function applyTranslations() {
       option.textContent = lang.languageOptions?.[option.value] || option.textContent;
     }
   }
+  syncLocaleQuickButtons();
+  syncLocalePicker();
 
   const modeOptClassic = [els.mode, els.mobileMode].map((sel) => sel?.querySelector('option[value="classic"]'));
   const modeOpt4Wide = [els.mode, els.mobileMode].map((sel) => sel?.querySelector('option[value="4wide"]'));
@@ -1198,18 +1248,39 @@ if (els.mobileMode4WideBtn) {
 
 if (els.languageSelect) {
   els.languageSelect.addEventListener("change", () => {
-    const nextLocale = els.languageSelect.value;
-    if (!I18N[nextLocale]) return;
-    currentLocale = nextLocale;
-    saveLocale(currentLocale);
-    applyTranslations();
+    applyLocaleChange(els.languageSelect.value);
+  });
+}
+
+for (const btn of (els.localeQuickButtons || [])) {
+  btn.addEventListener("click", () => {
+    applyLocaleChange(btn.dataset.locale);
+  });
+}
+
+if (els.localePickerBtn) {
+  els.localePickerBtn.addEventListener("click", () => {
+    const willOpen = !els.localePicker?.classList.contains("is-open");
+    setLocalePickerOpen(willOpen);
+  });
+}
+
+for (const btn of (els.localeMenuButtons || [])) {
+  btn.addEventListener("click", () => {
+    applyLocaleChange(btn.dataset.locale);
+    setLocalePickerOpen(false);
   });
 }
 
 window.addEventListener("pointerdown", (e) => {
-  if (!hasQuickTopbarUi()) return;
   const target = e.target;
   if (!(target instanceof Element)) return;
+
+  if (els.localePicker && !target.closest("#localePicker")) {
+    setLocalePickerOpen(false);
+  }
+
+  if (!hasQuickTopbarUi()) return;
   if (target.closest(".mobile-sheet") || target.closest(".mobile-topbar") || target.closest(".mobile-mode-switch") || target.closest(".mobile-system-row")) return;
   closeMobileSheets();
 });

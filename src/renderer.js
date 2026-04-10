@@ -1,4 +1,4 @@
-import { COLORS, PIECE_CELLS } from "./constants.js?v=0.3.92";
+import { COLORS, PIECE_CELLS } from "./constants.js?v=0.3.0";
 
 export class Renderer {
   constructor(canvas) {

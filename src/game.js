@@ -1,6 +1,6 @@
-import { DEFAULT_SETTINGS, getKickData, getKickData180 } from "./constants.js?v=0.3.92";
-import { Board } from "./board.js?v=0.3.92";
-import { BagRandomizer } from "./randomizer.js?v=0.3.92";
+import { DEFAULT_SETTINGS, getKickData, getKickData180 } from "./constants.js?v=0.3.0";
+import { Board } from "./board.js?v=0.3.0";
+import { BagRandomizer } from "./randomizer.js?v=0.3.0";
 
 function clamp(n, min, max) {
   return Math.max(min, Math.min(max, n));

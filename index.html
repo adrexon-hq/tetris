@@ -46,20 +46,22 @@
         <div id="mobileModeSheet" class="mobile-sheet mobile-mode-sheet" aria-label="모바일 모드 설정">
           <div class="mobile-sheet-card">
             <div id="mobileModeSheetTitle" class="mobile-sheet-title">모드</div>
-            <label id="languageLabel">언어
-              <select id="languageSelect">
-                <option value="ko">🇰🇷 한국어</option>
-                <option value="en">🇺🇸 English</option>
-                <option value="ja">🇯🇵 日本語</option>
-                <option value="zh">🇨🇳 简体中文</option>
-              </select>
-            </label>
-            <label id="mobileModeLabel">플레이 모드
-              <select id="mobileModeSelect">
-                <option value="classic">Classic (10x20)</option>
-                <option value="4wide">4Wide</option>
-              </select>
-            </label>
+            <div class="hidden" aria-hidden="true">
+              <label id="languageLabel">언어
+                <select id="languageSelect">
+                  <option value="ko">🇰🇷 한국어</option>
+                  <option value="en">🇺🇸 English</option>
+                  <option value="ja">🇯🇵 日本語</option>
+                  <option value="zh">🇨🇳 简体中文</option>
+                </select>
+              </label>
+              <label id="mobileModeLabel">플레이 모드
+                <select id="mobileModeSelect">
+                  <option value="classic">Classic (10x20)</option>
+                  <option value="4wide">4Wide</option>
+                </select>
+              </label>
+            </div>
             <label id="mobileSubModeLabel">모드
               <select id="mobileSubModeSelect">
                 <option value="off">프리 모드</option>
@@ -238,29 +240,60 @@
               <canvas id="gameCanvas" width="560" height="840" aria-label="tetris board"></canvas>
             </div>
 
-            <aside class="play-stats" aria-label="세션 통계">
-              <div id="playStatsHead" class="play-stats-head">SESSION</div>
-              <div class="play-stat-item">
-                <div id="ppsLabel" class="play-stat-label">PPS</div>
-                <div id="ppsText" class="play-stat-value">0.00</div>
+            <div class="session-side" aria-label="세션 및 언어">
+              <div id="localePicker" class="locale-picker">
+                <button id="localePickerBtn" class="locale-picker-btn" type="button" aria-haspopup="true" aria-expanded="false">
+                  <span id="localePickerFlag" class="locale-picker-flag" aria-hidden="true">🇰🇷</span>
+                  <span id="localePickerText" class="locale-picker-text">한국어</span>
+                  <span class="locale-picker-caret" aria-hidden="true">▾</span>
+                </button>
+                <div id="localePickerMenu" class="locale-picker-menu hidden" role="menu" aria-label="언어 선택">
+                  <button class="locale-menu-option" type="button" data-locale="ko" role="menuitem">
+                    <span class="locale-option-flag" aria-hidden="true">🇰🇷</span>
+                    <span class="locale-option-text">한국어</span>
+                  </button>
+                  <button class="locale-menu-option" type="button" data-locale="en" role="menuitem">
+                    <span class="locale-option-flag" aria-hidden="true">🇺🇸</span>
+                    <span class="locale-option-text">English</span>
+                  </button>
+                  <button class="locale-menu-option" type="button" data-locale="ja" role="menuitem">
+                    <span class="locale-option-flag" aria-hidden="true">🇯🇵</span>
+                    <span class="locale-option-text">日本語</span>
+                  </button>
+                  <button class="locale-menu-option" type="button" data-locale="zh" role="menuitem">
+                    <span class="locale-option-flag" aria-hidden="true">🇨🇳</span>
+                    <span class="locale-option-text">简体中文</span>
+                  </button>
+                </div>
               </div>
-              <div class="play-stat-item">
-                <div id="maxComboLabel" class="play-stat-label">MAX COMBO</div>
-                <div id="maxComboText" class="play-stat-value">0</div>
-              </div>
-              <div class="play-stat-item">
-                <div id="timeLabel" class="play-stat-label">TIME</div>
-                <div id="timeText" class="play-stat-value">00:00</div>
-              </div>
-              <div class="play-stat-item">
-                <div id="piecesLabel" class="play-stat-label">PIECES</div>
-                <div id="piecesText" class="play-stat-value">0</div>
-              </div>
-              <div class="play-stat-item">
-                <div id="attackStatLabel" class="play-stat-label">ATTACK</div>
-                <div id="attackTotalStatText" class="play-stat-value">0</div>
-              </div>
-            </aside>
+
+              <aside class="play-stats" aria-label="세션 통계">
+                <div id="playStatsHead" class="play-stats-head">SESSION</div>
+                <div class="play-stat-item">
+                  <div id="ppsLabel" class="play-stat-label">PPS</div>
+                  <div id="ppsText" class="play-stat-value">0.00</div>
+                </div>
+                <div class="play-stat-item">
+                  <div id="maxComboLabel" class="play-stat-label">MAX COMBO</div>
+                  <div id="maxComboText" class="play-stat-value">0</div>
+                </div>
+                <div class="play-stat-item">
+                  <div id="timeLabel" class="play-stat-label">TIME</div>
+                  <div id="timeText" class="play-stat-value">00:00</div>
+                </div>
+                <div class="play-stat-item">
+                  <div id="piecesLabel" class="play-stat-label">PIECES</div>
+                  <div id="piecesText" class="play-stat-value">0</div>
+                </div>
+                <div class="play-stat-item">
+                  <div id="attackStatLabel" class="play-stat-label">ATTACK</div>
+                  <div id="attackTotalStatText" class="play-stat-value">0</div>
+                </div>
+                <div class="play-stats-ad" aria-label="광고">
+                  <div id="desktopAdsterraBanner" class="play-stats-ad-slot"></div>
+                </div>
+              </aside>
+            </div>
           </div>
 
           <div class="mobile-system-row" aria-label="모바일 시스템 버튼">
@@ -345,10 +378,6 @@
 
     <!-- 키 변경 중 안내 오버레이 -->
     <div id="overlay" class="overlay hidden"></div>
-    <div class="site-ad" aria-label="광고">
-      <div class="site-ad-badge">AD</div>
-      <div id="desktopAdsterraBanner" class="site-ad-slot"></div>
-    </div>
     <div class="site-contact" aria-label="문의 메일">
       <a class="contact-link" href="mailto:adrexonhq@gmail.com?subject=Web%20Tetris%20문의" title="문의 메일 보내기">
         <span class="contact-icon" aria-hidden="true">✉</span>
@@ -359,7 +388,7 @@
         <span class="contact-email">adrexonhq@gmail.com</span>
       </a>
     </div>
-    <script type="module" src="./src/main.js?v=0.3.92"></script>
+    <script type="module" src="./src/main.js?v=0.3.0"></script>
     <script>
       (function () {
         const isMobile = window.matchMedia("(max-width: 1100px), (pointer: coarse)").matches;
